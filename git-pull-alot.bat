@@ -16,3 +16,5 @@ for /r %%d in (.) do (
 cd %originalPath%
 
 echo Done.
+
+pause

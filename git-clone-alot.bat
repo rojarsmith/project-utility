@@ -33,3 +33,5 @@ for /F "tokens=*" %%G in ('type "%repoList%"') do (
 :End
 cd "%originalPath%"
 echo Done.
+
+pause
