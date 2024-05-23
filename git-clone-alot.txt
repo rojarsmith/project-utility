@@ -1,6 +1,7 @@
 git@github.com:rojarsmith/esp32-serial.git
 git@github.com:rojarsmith/nextjs-template-si.git
 git@github.com:rojarsmith/nodemcu-32s-mcurl.git
+git@github.com:rojarsmith/quantcat.git
 git@github.com:rojarsmith/stm32f746g-disco-ota-client.git
 git@github.com:rojarsmith/stm32h7b3ieval-ota-client.git
 git@github.com:rojarsmith/stream-relay-nodejs.git
