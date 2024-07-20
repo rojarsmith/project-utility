@@ -30,7 +30,7 @@ for /F "tokens=*" %%G in ('type "%repoList%"') do (
     endlocal
 )
 
-:End
+::End
 cd "%originalPath%"
 echo Done.
 
