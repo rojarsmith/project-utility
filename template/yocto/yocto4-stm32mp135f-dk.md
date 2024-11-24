@@ -4,7 +4,253 @@ MPU: Arm Cortex‑A7 32-bit
 RAM: 0.5 GB(4-Gbit) DDR3L, 16 bits, 533 MHz
 Boot: Support `-optee.tsv`, not support `-trusted.tsv`
 
+```
+openstlinux-6.1-yocto-mickledore-mpu-v24.06.26 (Mickledore) is the new version delivered with the STM32MPU-ecosystem-v5.1.0 release. This software set consists of the following components:
+
+Build process
+OpenEmbedded v4.2.4 (Mickledore) - Updated
+GCC version v12.3.0 - Updated
+Embedded software components
+Linux kernel v6.1-stm32mp-r2 (v6.1.82) - Updated
+TF-A v2.8-stm32mp-r2 - Updated
+U-Boot v2022.10-stm32mp-r2 - Updated
+OP-TEE 3.19.0-stm32mp-r2 - Updated
+External DT 5.0-stm32mp-r1 - New
+OpenOCD version v0.12.0 - Updated
+Applicative components
+Weston version v11.0.1 - Updated
+Wayland version 1.21.0 - Updated
+GStreamer version v1.22.6 - Updated
+GCnano version v6.4.15 - Updated
+```
+
 ## Ubuntu 22.04
+
+STM32MP1-Ecosystem-v5.1.0
+
+```bash
+mkdir $HOME/STM32MPU_workspace
+cd $HOME/STM32MPU_workspace
+
+mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools
+mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools/STM32CubeProgrammer-2.17.0
+mkdir $HOME/STM32MPU_workspace/tmp
+pushd $HOME/STM32MPU_workspace/tmp
+unzip en.stm32cubeprg-lin-v2-17-0.zip
+export PATH=~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:$PATH
+
+pushd ~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers/rules
+sudo cp *.* /etc/udev/rules.d
+popd
+
+STM32_Programmer_CLI --h
+popd
+
+mkdir Starter-Package
+pushd Starter-Package
+
+tar -xvf en.FLASH-stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.tar.gz
+
+# STM32CubeProgrammer with SDCARD slow & display maybe not work
+# Binaries Path
+/home/dev/STM32MPU_workspace/Starter-Package/stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1
+
+# ~/STM32MPU_workspace/Starter-Package
+stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp135f-dk-optee.tsv
+
+sudo dd if=stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
+
+popd
+
+# Board $>
+
+# Printing distribution specific information
+cat /etc/build
+
+-----------------------
+Build Configuration:  |
+-----------------------
+BB_VERSION = 2.4.0
+BUILD_SYS = x86_64-linux
+NATIVELSBSTRING = universal
+TARGET_SYS = arm-ostl-linux-gnueabi
+MACHINE = stm32mp1
+DISTRO = openstlinux-weston
+DISTRO_VERSION = 4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26
+TUNE_FEATURES = arm vfp cortexa7 neon vfpv4 thumb callconvention-hard
+TARGET_FPU = hard
+MANIFESTVERSION = ostl-v5.1_rc3-2-ge7eebad74713d2c60cdae9ad43adb1581f4e0edf
+DISTRO_CODENAME = mickledore
+ACCEPT_EULA_stm32mp1 = 1
+GCCVERSION = 12.%
+PREFERRED_PROVIDER_virtual/kernel = linux-stm32mp
+-----------------------
+Layer Revisions:      |
+-----------------------
+meta-python       = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-oe           = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-gnome        = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-multimedia   = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-networking   = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-webserver    = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
+meta-st-stm32mp   = v5.1.xml:c6c94a55b0002dd10a7d129a6ff7eeb10b0bee93
+meta-st-openstlinux = v5.1.xml:ab43d854cb735a2175e836d35b6f963db05d68f1
+meta              = v5.1.xml:23b5141400b2c676c806df3308f023f7c04e34e0
+
+# Packages required by OpenEmbedded/Yocto
+sudo apt-get install gawk wget git git-lfs diffstat unzip texinfo gcc-multilib  chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev pylint xterm bsdmainutils libssl-dev libgmp-dev libmpc-dev lz4 zstd
+
+# Developer Package
+sudo apt-get install build-essential libncurses-dev libncurses5 libyaml-dev libssl-dev
+
+sudo apt install python-is-python3
+
+sudo apt-get install coreutils bsdmainutils sed curl bc lrzsz corkscrew cvs subversion mercurial nfs-common nfs-kernel-server libarchive-zip-perl dos2unix texi2html libxml2-utils
+
+echo 'options mmc_block perdev_minors=16' > /tmp/mmc_block.conf
+sudo mv /tmp/mmc_block.conf /etc/modprobe.d/mmc_block.conf
+
+mkdir Developer-Package
+pushd Developer-Package
+tar xvf en.SDK-x86_64-stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.tar.gz
+chmod +x stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/sdk/st-image-weston-openstlinux-weston-stm32mp1-x86_64-toolchain-4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.sh
+
+./stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/sdk/st-image-weston-openstlinux-weston-stm32mp1-x86_64-toolchain-4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.sh -d SDK
+
+source SDK/environment-setup-cortexa7t2hf-neon-vfpv4-ostl-linux-gnueabi
+
+echo $ARCH
+echo $CROSS_COMPILE
+$CC --version
+echo $OECORE_SDK_VERSION
+
+# mkdir $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v5.1.0/Developer-Package
+mkdir stm32mp1-openstlinux-24.06.26
+mkdir stm32mp1-openstlinux-24.06.26/sources
+mkdir stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example
+pushd stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example
+touch gtk_hello_world.c
+touch Makefile
+```
+
+`gtk_hello_world.c`
+
+```c
+#include <gtk/gtk.h>
+
+static void
+print_hello (GtkWidget *widget,
+             gpointer   data)
+{
+  g_print ("Hello World\n");
+}
+
+static void
+activate (GtkApplication *app,
+          gpointer        user_data)
+{
+  GtkWidget *window;
+  GtkWidget *button;
+  GtkWidget *button_box;
+
+  window = gtk_application_window_new (app);
+  gtk_window_set_title (GTK_WINDOW (window), "Window");
+  gtk_window_set_default_size (GTK_WINDOW (window), 200, 200);
+
+  button_box = gtk_button_box_new (GTK_ORIENTATION_HORIZONTAL);
+  gtk_container_add (GTK_CONTAINER (window), button_box);
+
+  button = gtk_button_new_with_label ("Hello World");
+  g_signal_connect (button, "clicked", G_CALLBACK (print_hello), NULL);
+  g_signal_connect_swapped (button, "clicked", G_CALLBACK (gtk_widget_destroy), window);
+  gtk_container_add (GTK_CONTAINER (button_box), button);
+
+  gtk_widget_show_all (window);
+}
+
+int
+main (int    argc,
+      char **argv)
+{
+  GtkApplication *app;
+  int status;
+
+  app = gtk_application_new ("org.gtk.example", G_APPLICATION_DEFAULT_FLAGS);
+  g_signal_connect (app, "activate", G_CALLBACK (activate), NULL);
+  status = g_application_run (G_APPLICATION (app), argc, argv);
+  g_object_unref (app);
+
+  return status;
+}
+```
+
+`Makefile`
+
+```makefile
+PROG = gtk_hello_world
+SRCS = gtk_hello_world.c
+
+CLEANFILES = $(PROG)
+
+# Add / change option in CFLAGS and LDFLAGS
+CFLAGS += -Wall $(shell pkg-config --cflags gtk+-3.0)
+LDFLAGS += $(shell pkg-config --libs gtk+-3.0)
+
+all: $(PROG)
+
+$(PROG): $(SRCS)
+	$(CC) -o $@ $^ $(CFLAGS) $(LDFLAGS)
+
+clean:
+	rm -f $(CLEANFILES) $(patsubst %.c,%.o, $(SRCS))
+```
+
+```bash
+make
+
+# /media/dev/rootfs/usr/local
+/media/dev/userfs
+
+sudo cp ~/STM32MPU_workspace/Developer-Package/stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example/gtk_hello_world .
+
+# Must remove SDCARD safely
+sudo eject /dev/sdb
+
+# Board $>
+cd /usr/local/
+su -l weston -c "/usr/local/gtk_hello_world"
+```
+
+scarthgap
+
+```bash
+mkdir yocto
+pushd yocto
+git clone git://git.yoctoproject.org/poky.git
+pushd poky
+git checkout -t origin/scarthgap -b scarthgap-local
+git branch
+popd
+
+mkdir Distribution-Package
+pushd Distribution-Package
+
+repo init -u https://github.com/STMicroelectronics/oe-manifest.git -b refs/tags/openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06
+repo sync
+
+sudo apt install gcc-multilib libegl1-mesa libgmp-dev libmpc-dev libsdl1.2-dev pylint python3-git python3-jinja2 python3-pip socat xterm zstd bsdmainutils git-lfs
+
+# ~/stm32mp/yocto/Distribution-Package/build-openstlinuxweston-stm32mp1
+DISTRO=openstlinux-weston MACHINE=stm32mp1 source layers/meta-st/scripts/envsetup.sh
+
+bitbake st-image-weston
+
+tmp-glibc/deploy/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh tmp-glibc/deploy/images/stm32mp1/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp135f-dk-optee.tsv
+
+sudo dd if=tmp-glibc/deploy/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
+```
+
+kirkstone
 
 ```bash
 sudo apt update
