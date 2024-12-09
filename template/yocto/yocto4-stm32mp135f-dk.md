@@ -308,7 +308,9 @@ bitbake-layers add-layer ../layers/meta-clang
 
 #### dunfell x11
 
-Ubuntu 18.04, Ubuntu 22.04 Not work
+Only support 157F, not support 135F, 
+
+Support Ubuntu 18.04, Ubuntu 22.04 Not work
 
 ```bash
 sudo apt 
@@ -322,14 +324,29 @@ sudo apt install -y bsdmainutils gcc-multilib libegl1-mesa libgmp-dev libmpc-dev
 sudo locale-gen en_US.UTF-8 
 
 mkdir dstpkg
-pushd $STM32WKSP/dstpkg
+pushd $STM32MPWS/dstpkg
+# STM32MP1 OpenSTLinux Starter Package 2.0.0
 repo init -u https://github.com/STMicroelectronics/oe-manifest.git -b refs/tags/openstlinux-5.4-dunfell-mp1-20-06-24
+repo sync
 DISTRO=openstlinux-x11 MACHINE=stm32mp1 source layers/meta-st/scripts/envsetup.sh
 
 layers/openembedded-core/meta/recipes-support/iso-codes/iso-codes_4.4.bb
 # SRC_URI = "git://salsa.debian.org/iso-codes-team/iso-codes.git;protocol=http;branch=main"
 
+layers/meta-openembedded/meta-oe/recipes-support/libiio/
+# SRC_URI = "https://github.com/analogdevicesinc/libiio.git;protocol=https;branch=main"
+# SRC_URI[sha256sum] = "fa1c96e86140b4bae1c76e0f9c8f4c2c73afad135820ac6dad15c2f246b4c1a8"
+
+layers/openembedded-core/meta/recipes-sato/puzzles/puzzles_git.bb
+SRC_URI = "git://git.tartarus.org/simon/puzzles.git;branch=main \
+
 bitbake st-example-image-x11
+
+tmp-glibc/deploy/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh tmp-glibc/deploy/images/stm32mp1/flashlayout_st-example-image-x11/optee/FlashLayout_sdcard_stm32mp135f-dk-optee.tsv
+
+sudo dd if=tmp-glibc/deploy/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
+
+sudo eject /dev/sdb
 ```
 
 ### Github
