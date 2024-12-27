@@ -4,7 +4,25 @@ MPU: Arm Cortex‑A7 32-bit
 RAM: 0.5 GB(4-Gbit) DDR3L, 16 bits, 533 MHz
 Boot: Support `-optee.tsv`, not support `-trusted.tsv`
 
-```
+```yaml
+5.0.3-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06 (Scarthgap) is the new version delivered with the STM32MPU-ecosystem-v6.0.0 release. This software set consists of the following components:
+
+Build process
+OpenEmbedded v5.0.3 (Scarthgap) - Updated
+GCC version v13.3.0 - Updated
+Embedded software components
+Linux kernel v6.6-stm32mp-r1 (v6.6.48) - Updated
+TF-A v2.10-stm32mp-r1 - Updated
+U-Boot v2023.10-stm32mp-r1 - Updated
+OP-TEE 4.0.0-stm32mp-r1 - Updated
+External DT 6.0-stm32mp-r1 - Updated
+OpenOCD version v0.12.0
+Applicative components
+Weston version v13.0.1 - Updated
+Wayland version 1.22.0 - Updated
+GStreamer version v1.22.12 - Updated
+GCnano version v6.4.19 - Updated
+
 openstlinux-6.1-yocto-mickledore-mpu-v24.06.26 (Mickledore) is the new version delivered with the STM32MPU-ecosystem-v5.1.0 release. This software set consists of the following components:
 
 Build process
@@ -36,91 +54,87 @@ git config --global user.email "rojarsmith@gmail.com"
 git config --global user.name "RojarSmith"
 sudo sed -i -e 's/set compatible/set nocompatible/' /etc/vim/vimrc.tiny
 
+mkdir -p bin
+curl https://storage.googleapis.com/git-repo-downloads/repo > bin/repo
+chmod a+x bin/repo
+echo 'export PATH=~/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+
 mkdir stm32mpws
 echo 'export STM32MPWS=~/stm32mpws' >> ~/.bashrc
 source ~/.bashrc
 pushd $STM32MPWS
-
-mkdir -p bin
-curl https://storage.googleapis.com/git-repo-downloads/repo > bin/repo
-chmod a+x bin/repo
-echo 'export PATH=~/stm32mpws/bin:$PATH' >> ~/.bashrc
-source ~/.bashrc
 ```
 
-STM32MP1-Ecosystem-v5.1.0
+### STM32MP1-Ecosystem-v6.0.0
 
 ```bash
-mkdir $HOME/STM32MPU_workspace
-cd $HOME/STM32MPU_workspace
-
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools/STM32CubeProgrammer-2.17.0
-mkdir $HOME/STM32MPU_workspace/tmp
-pushd $HOME/STM32MPU_workspace/tmp
-unzip en.stm32cubeprg-lin-v2-17-0.zip
-export PATH=~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:$PATH
-
-pushd ~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers/rules
+pushd $STM32MPWS
+mkdir $STM32MPWS/tmp
+pushd $STM32MPWS/tmp
+# Copy file, `Skip All` with VMware
+unzip en.stm32cubeprg-lin-v2-18-0.zip
+./SetupSTM32CubeProgrammer-2.18.0.linux
+# export PATH=~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:$PATH
+echo 'export PATH=~/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:$PATH' >> ~/.bashrc
+source ~/.bashrc
+pushd $HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers/rules
 sudo cp *.* /etc/udev/rules.d
 popd
-
-STM32_Programmer_CLI --h
 popd
+STM32_Programmer_CLI --h
 
+# ~/stm32mpws
 mkdir Starter-Package
 pushd Starter-Package
+# Copy file, `skip all` with VMware
+tar -xvf en.FLASH-stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06.tar.gz
 
-tar -xvf en.FLASH-stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.tar.gz
+# ~/stm32mpws/Starter-Package
+stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06/images/stm32mp1/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp135f-dk-optee.tsv
 
-# STM32CubeProgrammer with SDCARD slow & display maybe not work
-# Binaries Path
-/home/dev/STM32MPU_workspace/Starter-Package/stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1
-
-# ~/STM32MPU_workspace/Starter-Package
-stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp135f-dk-optee.tsv
-
-sudo dd if=stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
+sudo dd if=stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
 
 popd
 
 # Board $>
 
-# Printing distribution specific information
-cat /etc/build
-
 -----------------------
 Build Configuration:  |
 -----------------------
-BB_VERSION = 2.4.0
+BB_VERSION = 2.8.0
 BUILD_SYS = x86_64-linux
 NATIVELSBSTRING = universal
 TARGET_SYS = arm-ostl-linux-gnueabi
 MACHINE = stm32mp1
 DISTRO = openstlinux-weston
-DISTRO_VERSION = 4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26
+DISTRO_VERSION = 5.0.3-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06
 TUNE_FEATURES = arm vfp cortexa7 neon vfpv4 thumb callconvention-hard
 TARGET_FPU = hard
-MANIFESTVERSION = ostl-v5.1_rc3-2-ge7eebad74713d2c60cdae9ad43adb1581f4e0edf
-DISTRO_CODENAME = mickledore
+MANIFESTVERSION = ostl-v6.0-4-g08429ce6dd12739ca248fa2f56c67af6bfdb3e20
+DISTRO_CODENAME = scarthgap
 ACCEPT_EULA_stm32mp1 = 1
-GCCVERSION = 12.%
+GCCVERSION = 13.%
 PREFERRED_PROVIDER_virtual/kernel = linux-stm32mp
 -----------------------
 Layer Revisions:      |
 -----------------------
-meta-python       = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-oe           = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-gnome        = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-multimedia   = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-networking   = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-webserver    = v5.1.xml:aa5e8edabbc414d8ec1b2ad63c8743c7baf99626
-meta-st-stm32mp   = v5.1.xml:c6c94a55b0002dd10a7d129a6ff7eeb10b0bee93
-meta-st-openstlinux = v5.1.xml:ab43d854cb735a2175e836d35b6f963db05d68f1
-meta              = v5.1.xml:23b5141400b2c676c806df3308f023f7c04e34e0
+meta-python       = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-oe           = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-gnome        = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-multimedia   = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-networking   = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-webserver    = v6.0.xml:1235dd4ed4a57e67683c045ad76b6a0f9e896b45
+meta-st-stm32mp   = v6.0.xml:32707c26d139d3583a3f14564899c7bfc4f9aa7e
+meta-st-openstlinux = v6.0.xml:fd3ef2feb59ad51694464eaa058b5c8fb1e24111
+meta              = v6.0.xml:236ac1b43308df722a78d3aa20aef065dfae5b2b
+
+# ~/stm32mpws
+popd
 
 # Packages required by OpenEmbedded/Yocto
-sudo apt-get install gawk wget git git-lfs diffstat unzip texinfo gcc-multilib  chrpath socat cpio python3 python3-pip python3-pexpect xz-utils debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev pylint xterm bsdmainutils libssl-dev libgmp-dev libmpc-dev lz4 zstd
+sudo apt-get install gawk wget git git-lfs diffstat unzip texinfo gcc-multilib  chrpath socat cpio python3 python3-pip python3-pexpect debianutils iputils-ping python3-git python3-jinja2 libegl1-mesa libsdl1.2-dev pylint xterm bsdmainutils
+sudo apt-get install libssl-dev libgmp-dev libmpc-dev lz4 zstd
 
 # Developer Package
 sudo apt-get install build-essential libncurses-dev libncurses5 libyaml-dev libssl-dev
@@ -134,10 +148,11 @@ sudo mv /tmp/mmc_block.conf /etc/modprobe.d/mmc_block.conf
 
 mkdir Developer-Package
 pushd Developer-Package
-tar xvf en.SDK-x86_64-stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.tar.gz
-chmod +x stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/sdk/st-image-weston-openstlinux-weston-stm32mp1-x86_64-toolchain-4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.sh
+# Copy file, `skip all` with VMware
+tar xvf en.SDK-x86_64-stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06.tar.gz
+chmod +x stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06/sdk/st-image-weston-openstlinux-weston-stm32mp1.rootfs-x86_64-toolchain-5.0.3-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06.sh
 
-./stm32mp1-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26/sdk/st-image-weston-openstlinux-weston-stm32mp1-x86_64-toolchain-4.2.4-openstlinux-6.1-yocto-mickledore-mpu-v24.06.26.sh -d SDK
+./stm32mp1-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06/sdk/st-image-weston-openstlinux-weston-stm32mp1.rootfs-x86_64-toolchain-5.0.3-openstlinux-6.6-yocto-scarthgap-mpu-v24.11.06.sh -d SDK
 
 source SDK/environment-setup-cortexa7t2hf-neon-vfpv4-ostl-linux-gnueabi
 
@@ -146,11 +161,10 @@ echo $CROSS_COMPILE
 $CC --version
 echo $OECORE_SDK_VERSION
 
-# mkdir $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v5.1.0/Developer-Package
-mkdir stm32mp1-openstlinux-24.06.26
-mkdir stm32mp1-openstlinux-24.06.26/sources
-mkdir stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example
-pushd stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example
+mkdir $STM32MPWS/Developer-Package/stm32mp1-openstlinux-24.11.06
+mkdir $STM32MPWS/Developer-Package/stm32mp1-openstlinux-24.11.06/sources
+mkdir $STM32MPWS/Developer-Package/stm32mp1-openstlinux-24.11.06/sources/gtk_hello_world_example
+pushd $STM32MPWS/Developer-Package/stm32mp1-openstlinux-24.11.06/sources/gtk_hello_world_example
 touch gtk_hello_world.c
 touch Makefile
 ```
@@ -230,25 +244,23 @@ clean:
 ```bash
 make
 
-# /media/dev/rootfs/usr/local
-/media/dev/userfs
-
-sudo cp ~/STM32MPU_workspace/Developer-Package/stm32mp1-openstlinux-24.06.26/sources/gtk_hello_world_example/gtk_hello_world .
-
-# Must remove SDCARD safely
-sudo eject /dev/sdb
-
-
 # Push this binary onto the board (Ethernet connection needed)
-scp app root@192.168.50.96:/usr/local
-
+scp gtk_hello_world root@192.168.50.96:/usr/local/app
 
 # Board $>
-cd /usr/local/
-su -l weston -c "/usr/local/gtk_hello_world"
+su -l weston -c "/usr/local/app"
+
+## To SDCARD
+pushd /media/dev/userfs
+sudo cp $STM32MPWS/Developer-Package/stm32mp1-openstlinux-24.11.06/sources/gtk_hello_world_example/gtk_hello_world appp
+# Must remove SDCARD safely
+sudo eject /dev/sdb
+popd
 ```
 
-scarthgap
+### Distribution Package
+
+#### scarthgap
 
 ```bash
 mkdir yocto
@@ -277,7 +289,7 @@ tmp-glibc/deploy/images/stm32mp1/scripts/create_sdcard_from_flashlayout.sh tmp-g
 sudo dd if=tmp-glibc/deploy/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of=/dev/sdb bs=8M status=progress conv=fdatasync
 ```
 
-### Distribution Package
+#### mickledore
 
 ```bash
 pushd $STM32WKSP
