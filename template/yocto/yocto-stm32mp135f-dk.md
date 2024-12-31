@@ -112,7 +112,7 @@ sudo dd if=osl6.6/images/stm32mp1/FlashLayout_sdcard_stm32mp135f-dk-optee.raw of
 # Must remove SDCARD safely
 sudo eject /dev/sdb
 
-### Board $>
+## Board $>
 
 cat /etc/build
 
@@ -367,6 +367,9 @@ reboot
 ## Board $>
 
 dmesg | grep -i stm_drm_platform_probe
+## Ack is nothing
+
+## PC $>
 
 # Go to the Linux kernel source directory
 cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48
@@ -397,7 +400,7 @@ make ${IMAGE_KERNEL} LOADADDR=0xC2000040 O="${OUTPUT_BUILD_DIR}" -j 8
 # Update the Linux kernel image into board
 scp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/${IMAGE_KERNEL} root@$TBIP:/boot
 
-### Board $>
+## Board $>
 
 # Reboot the board
 reboot
@@ -408,6 +411,8 @@ dmesg | grep -i stm_drm_platform_probe
 ```
 
 #### BMP280 sensor with I2C
+
+![yocto-stm32mp135f-dk-01](./yocto-stm32mp135f-dk-01.jpg)
 
 ```bash
 cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0
@@ -543,26 +548,14 @@ i2cdetect -y 1
 i2cget -y 1 0x76 0xd0
 ## 0x60
 
-### Enabling the sensor driver
-
-## 1. Enable the driver in our Linux kernel configuration, so that the driver code gets built as part of our kernel image
-## 2. Describe the BME280 device in our Device Tree so that the Linux kernel knows we have one such device, and how it is connected to the system
-
-## make menuconfig generate .config that can't make correctly because of toolchain not support
-
-# $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48
-make menuconfig
-Device Drivers
-+- Industrial I/O support
-   +- Pressure sensors
-      +- Bosch Sensortec BMP180/BMP280 pressure sensor I2C driver
-
-cat .config | grep CONFIG_BMP280
-CONFIG_BMP280=y
-CONFIG_BMP280_I2C=y
-CONFIG_BMP280_SPI=y
-##
 ```
+
+##### Enabling the sensor driver
+
+1. Enable the driver in our Linux kernel configuration, so that the driver code gets built as part of our kernel image
+2. Describe the BME280 device in our Device Tree so that the Linux kernel knows we have one such device, and how it is connected to the system
+
+$STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48 make menuconfig generate .config that can't make correctly because of .config controlled by another tool.
 
 `$STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48/arch/arm/boot/dts/st/stm32mp135f-dk.dts`
 
@@ -577,6 +570,8 @@ CONFIG_BMP280_SPI=y
 ```
 
 ```bash
+### Update config temporary
+
 cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/build
 
 set | grep CROSS
@@ -595,11 +590,29 @@ sudo apt install meld
 meld defconfig defconfig.old
 ## CONFIG_BMP280=y
 
-# Must at `build` folder
-make ${IMAGE_KERNEL} LOADADDR=0xC2000040 O="${OUTPUT_BUILD_DIR}" -j 8
+## Update device tree to the board
 
+cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48
+make ${IMAGE_KERNEL} vmlinux dtbs LOADADDR=0xC2000040 O="${OUTPUT_BUILD_DIR}" -j 8
+cp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/${IMAGE_KERNEL} ${OUTPUT_BUILD_DIR}/install_artifact/boot/
+find ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/dts/ -name 'st*.dtb' -exec cp '{}' ${OUTPUT_BUILD_DIR}/install_artifact/boot/ \;
+cd ${OUTPUT_BUILD_DIR}/install_artifact
+scp -r boot/* root@$TBIP:/boot/
+
+### Update device tree & IIO Driver
+
+cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48
+make ${IMAGE_KERNEL} vmlinux dtbs LOADADDR=0xC2000040 O="${OUTPUT_BUILD_DIR}" -j 8
+make modules O="${OUTPUT_BUILD_DIR}" -j 8
+make INSTALL_MOD_PATH="${OUTPUT_BUILD_DIR}/install_artifact" modules_install O="${OUTPUT_BUILD_DIR}"
+cp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/${IMAGE_KERNEL} ${OUTPUT_BUILD_DIR}/install_artifact/boot/
+find ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/dts/ -name 'st*.dtb' -exec cp '{}' ${OUTPUT_BUILD_DIR}/install_artifact/boot/ \;
+cd ${OUTPUT_BUILD_DIR}/install_artifact
+scp -r boot/* root@$TBIP:/boot/
+rm lib/modules/6.6.48/build
+find . -name "*.ko" | xargs $STRIP --strip-debug --remove-section=.comment --remove-section=.note --preserve-dates
+scp -r lib/modules/* root@$TBIP:/lib/modules
 cp arch/arm/boot/uImage install_artifact/boot/
-
 scp install_artifact/boot/uImage root@$TBIP:/boot/
 
 ## Board $>
@@ -607,38 +620,23 @@ scp install_artifact/boot/uImage root@$TBIP:/boot/
 sync
 reboot
 
-## rebuild & update kernal
-cd $STM32MPWS/developerpkg/osl6.6/sources/arm-ostl-linux-gnueabi/linux-stm32mp-6.6.48-stm32mp-r1-r0/linux-6.6.48
-(yes '' || true) |  make oldconfig O="${OUTPUT_BUILD_DIR}"
-make ${IMAGE_KERNEL} vmlinux dtbs LOADADDR=0xC2000040 O="${OUTPUT_BUILD_DIR}" -j 8
-make modules O="${OUTPUT_BUILD_DIR}" -j 8
-make INSTALL_MOD_PATH="${OUTPUT_BUILD_DIR}/install_artifact" modules_install O="${OUTPUT_BUILD_DIR}"
-mkdir -p ${OUTPUT_BUILD_DIR}/install_artifact/boot/
-cp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/${IMAGE_KERNEL} ${OUTPUT_BUILD_DIR}/install_artifact/boot/
-find ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/dts/ -name 'st*.dtb' -exec cp '{}' ${OUTPUT_BUILD_DIR}/install_artifact/boot/ \;
-cd ${OUTPUT_BUILD_DIR}/install_artifact
-scp -r boot/* root@$TBIP:/boot/
-# Remove the link created inside the install_artifact/lib/modules/<kernel version> directory
-rm lib/modules/6.6.48/build
-# Or
-rm lib/modules/6.6.48-g77af50506ac4-dirty/build
-# Optionally, strip kernel modules (to reduce the size of each kernel modules)
-find . -name "*.ko" | xargs $STRIP --strip-debug --remove-section=.comment --remove-section=.note --preserve-dates
-# Copy kernel modules
-scp -r lib/modules/* root@$TBIP:/lib/modules
-
 zcat /proc/config.gz | grep CONFIG_BMP
-## CONFIG_BMP280=y
-## CONFIG_BMP280_I2C=y
-## CONFIG_BMP280_SPI=y
+##
+CONFIG_BMP280=y
+CONFIG_BMP280_I2C=y
+CONFIG_BMP280_SPI=y
+##
 
 ls -l /sys/bus/i2c/devices/
 # Or
 ls -l /sys/bus/i2c/devices/ | grep 1-0076
+##
 lrwxrwxrwx 1 root root 0 Dec 28 11:29 1-0076 -> ../../../devices/platform/soc/5c007000.bus/4c006000.i2c/i2c-1/1-0076
+##
 
 # Device Tree node base/soc/bus@5c007000/i2c@4c006000/pressure@76
 ls -l /sys/bus/i2c/devices/1-0076/
+##
 lrwxrwxrwx 1 root root    0 Dec 28 11:33 driver -> ../../../../../../../bus/i2c/drivers/bmp280
 drwxr-xr-x 3 root root    0 Dec 28 11:29 iio:device0
 -r--r--r-- 1 root root 4096 Dec 28 11:29 modalias
@@ -648,12 +646,15 @@ drwxr-xr-x 2 root root    0 Dec 28 11:33 power
 lrwxrwxrwx 1 root root    0 Dec 28 11:29 subsystem -> ../../../../../../../bus/i2c
 lrwxrwxrwx 1 root root    0 Dec 28 11:33 supplier:regulator:regulator.0 -> ../../../../../../virtual/devlink/regulator:regulator.0--i2c:1-0076
 -rw-r--r-- 1 root root 4096 Dec 28 11:29 uevent
+##
 
 # Interact with an IIO driver
 
 ls -l /sys/bus/iio/devices/
+##
 total 0
 lrwxrwxrwx 1 root root 0 Dec 28 11:29 iio:device0 -> ../../../devices/platform/soc/5c007000.bus/4c006000.i2c/i2c-1/1-0076/iio:device0
+##
 
 # IIO device is iio:device0
 
@@ -692,7 +693,7 @@ What:        /sys/bus/iio/devices/iio:deviceX/in_humidityrelative_input
 Description: Scaled humidity measurement in milli percent.
 ```
 
-Modify by fragment
+##### Modify by fragment
 
 `fragment-04-modules.config`
 
@@ -700,6 +701,14 @@ Modify by fragment
 CONFIG_BMP280=y
 CONFIG_BMP280_I2C=y
 CONFIG_BMP280_SPI=y
+```
+
+##### No space left on device
+
+```bash
+## Board $>
+du -h --max-depth=1 /usr/lib/modules | sort -h
+rm -R /usr/lib/modules/6.6.48-g811255867092-dirty
 ```
 
 #### Distribution Package
