@@ -35,8 +35,19 @@ set(GTK_DLLS
     liblzo2-2.dll
 )
 
+function(find_msys2_root_from_compiler)
+    if(CMAKE_C_COMPILER)
+        get_filename_component(compilter_path "${CMAKE_C_COMPILER}" DIRECTORY)
+        message(STATUS "C Compiler Path: ${compilter_path}")
+        set(COMPILER_PATH "${compilter_path}" PARENT_SCOPE)
+    endif()
+endfunction()
+
+find_msys2_root_from_compiler()
+message(STATUS "COMPILER_PATH: ${COMPILER_PATH}")
+
 foreach(DLL ${GTK_DLLS})
     add_custom_command(TARGET hello_gtk POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
-        "C:/msys64/ucrt64/bin/${DLL}" $<TARGET_FILE_DIR:hello_gtk>)
+        "${COMPILER_PATH}/${DLL}" $<TARGET_FILE_DIR:hello_gtk>)
 endforeach()
