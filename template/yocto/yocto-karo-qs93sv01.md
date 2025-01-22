@@ -43,8 +43,10 @@ echo 'export PATH=~/bin:$PATH' >> ~/.bashrc
 source ~/.bashrc
 
 mkdir karo-nxp-bsp;cd karo-nxp-bsp
+#-----choice begin
 repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b mickledore
-repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b refs/tags/KARO-2024-03-12
+repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b refs/tags/KARO-2024-08-02
+#-----choice end
 repo sync
 
 # Setup Build Directory
@@ -59,15 +61,19 @@ source setup-environment build-qs93-5210
 # Enable sstate cache
 echo SSTATE_MIRRORS = \"file://.* http://sstate.karo-electronics.de/mickledore/PATH\" >> conf/local.conf
 
+#-----choice begin
 bitbake karo-image-minimal
 bitbake karo-image-weston
+#-----choice end
 
 # Change Jump to download mode and restart board, no need power off.
 # Set `NXP Semiconductors OO Blank 93` to VM.
 # Set `NXP Semiconductors USB download gadget` to VM.
 # Flash the module
+#-----choice begin
 pushd tmp/deploy/images/qs93-5210/karo-image-minimal
 pushd tmp/deploy/images/qs93-5210/karo-image-weston
+#-----choice end
 wget https://github.com/nxp-imx/mfgtools/releases/download/uuu_1.5.141/uuu
 chmod a+x uuu
 sudo ./uuu -v
@@ -194,5 +200,44 @@ electron main.js --no-sandbox --disable-gpu --headless
 
 # electron exited with signal SIGSEGV
 # Device not have LVDS display
+```
+
+## Display
+
+```bash
+## U-BOOT >
+# Check .dtb, remove prefix `imx93-`
+ext4ls mmc 0:1 /
+#-----choice begin
+setenv overlays_qsbase93 ${overlays_qsbase93} karo-lvds-panel karo-panel-tm101jvhg32tm101jvhg32
+setenv overlays_qsbase93 ${overlays_qsbase93} lvds-panel panel-
+tm101jvhg32tm101jvhg32
+#-----choice end
+saveenv
+reset
+
+printenv overlays_qsbase93
+# overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710 lvds-panel panel-tm101jvhg32
+# overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710 karo-lvds-panel karo-panel-tm101jvhg32
+
+setenv overlays_qsbase93 ""
+saveenv
+
+setenv fdt_file imx93-qs93-5210.dtb
+saveenv
+
+env default -a
+saveenv
+
+mmc list
+mmc dev 0:1
+mmc dev
+ext4ls mmc 0:1 /
+##
+
+bitbake -c cleansstate virtual/kernel
+bitbake virtual/kernel
+
+ls tmp/deploy/images/qs93-5210/*.dtb
 ```
 
