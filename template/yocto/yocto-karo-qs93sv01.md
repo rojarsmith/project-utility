@@ -239,5 +239,24 @@ bitbake -c cleansstate virtual/kernel
 bitbake virtual/kernel
 
 ls tmp/deploy/images/qs93-5210/*.dtb
+
+ls /run/user/1000/
+
+export XDG_RUNTIME_DIR=/run/user/1000
+export WAYLAND_DISPLAY=wayland-1
+
+electron --no-sandbox --disable-gpu --ozone-platform=wayland .
+
+ls /tmp/.X11-unix/
+# X0
+```
+
+## Touch
+
+```bash
+dmesg | grep -i touch
+[    0.082505] usbcore: registered new interface driver usbtouchscreen
+lsusb
+Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
 ```
 
