@@ -254,9 +254,19 @@ ls /tmp/.X11-unix/
 ## Touch
 
 ```bash
+root@qs93-5210:~# dmesg | grep -i touch
+[    0.082563] usbcore: registered new interface driver usbtouchscreen
+[    0.725105] hid-multitouch 0003:222A:0001.0001: input: USB HID v1.10 Device [ILITEK ILITEK-TP] on usb-ci_hdrc.1-1/input0
+
+# Error
 dmesg | grep -i touch
 [    0.082505] usbcore: registered new interface driver usbtouchscreen
 lsusb
 Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+ls /dev/input/
+by-id  by-path  event0  event1  touchscreen0
+
+evtest-1.35-2-aarch64.pkg.tar.xz
 ```
 
