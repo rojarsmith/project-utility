@@ -286,6 +286,133 @@ bitbake virtual/kernel
 ls tmp/deploy/images/qs93-5210/*.dtb
 ```
 
+### Custom
+
+This is basically all you need for an addition to Yocto:
+
+```bash
+meta-mypanel/
+├── COPYING.MIT
+├── README
+├── conf
+│   └── layer.conf
+└── recipes-kernel
+    └── linux
+        ├── linux-karo
+        │   └── dts
+        │       └── freescale
+        │           └── {name}.dts
+        └── linux-karo_%.bbappend
+
+6 directories, 5 files
+```
+
+- **{name}**.dts contains the configuration of your display.
+
+**Prerequisites**
+
+> - karo-nxp-bsp is used here as an example BSP directory
+> - You have setup the environment and build directory (Refer to: [Setup Build Directory](https://karo-electronics.github.io/docs/yocto-guide/nxp/build.html#setup-build-directory))
+> - You can successfully built the image
+
+1. Create your custom layer with the name “mypanel” as example
+
+```bash
+bitbake-layers create-layer ~/karo-nxp-bsp/sources/meta-mypanel
+```
+
+2. Remove the example and setup the required directories
+
+```bash
+cd ~/karo-nxp-bsp/sources/meta-mypanel
+rm -rf recipes-example/
+mkdir -p recipes-kernel/linux/linux-karo/dts/freescale
+cd recipes-kernel/linux
+echo 'FILESEXTRAPATHS:prepend := "${THISDIR}/${PN}:"' > linux-karo_%.bbappend
+```
+
+3. Copy an existing panel .dts as reference.
+
+```bash
+cd linux-karo-6.1/dts/freescale
+cp $(find ~/karo-nxp-bsp/sources/meta-karo-nxp/ -name "imx93-karo-panel-t*.dts") imx93-mypanel.dts
+```
+
+4. Edit imx93-mypanel.dts (see complete contents below)
+
+```c
+...
+* Copyright ...
+...
+   overlays {
+      mypanel;
+   };
+...
+   label = "MyPANEL";
+...
+```
+
+4. Add *mypanel* to DTB_OVERLAYS
+
+```bash
+cd ~/karo-nxp-bsp/sources/meta-mypanel/conf
+echo 'DTB_OVERLAYS:append = " mypanel"' >> layer.conf
+```
+
+5. Add the new layer and create the images as usual.
+
+Change to your build directory and add the new layer.
+
+```bash
+bitbake-layers add-layer ../sources/meta-mypanel
+bitbake {your image}
+```
+
+imx93-mypanel.dtb will be added to the boot partition image.
+
+karo-panel-tm101jvhg32.dts
+
+```c
+// SPDX-License-Identifier: (GPL-2.0 OR MIT)
+/*
+ * Copyright 2022 Lothar Waßmann <LW@KARO-electronics.de>
+ *
+ */
+
+/dts-v1/;
+
+/plugin/;
+
+&{/chosen} {
+   overlays {
+      karo-panel-tm101jvhg32;
+   };
+};
+
+&panel {
+   label = "TM101JVHG32";
+   width-mm = <217>;
+   height-mm = <136>;
+   status = "okay";
+
+   panel-timing {
+      clock-frequency = <62500000>;
+      hactive = <1280>;
+      vactive = <800>;
+      hback-porch = <80>;
+      hfront-porch = <80>;
+      vback-porch = <12>;
+      vfront-porch = <11>;
+      hsync-len = <2>;
+      vsync-len = <1>;
+      hsync-active = <0>;
+      vsync-active = <0>;
+      de-active = <0>;
+      pixelclk-active = <0>;
+   };
+};
+```
+
 ## Touch
 
 ```bash
