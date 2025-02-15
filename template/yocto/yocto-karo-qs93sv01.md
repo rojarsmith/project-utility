@@ -9,8 +9,18 @@ ARM Cortex-M33, 250 MHz
 2MB NOR Flash
 4GB eMMC
 
+Boot time: ~20 seconds
+
+ATTENTION
+
+DO NOT disconnect USB-C poser supply while USB-UART (micro USB) is connected
+
+micro USB: Silicon Labs CP210x USB to UART Bridge (COMx)
+
+## Device Side Commands
+
 ```bash
-# Device name
+# NIC name
 ip link show
 
 # DHCP
@@ -21,7 +31,7 @@ ping google.com
 
 ## Build and flash quick guide
 
-Yocto Mickledore
+Yocto, Support Ubuntu 22.04
 
 ```bash
 sudo apt update
@@ -44,39 +54,58 @@ source ~/.bashrc
 
 mkdir karo-nxp-bsp;cd karo-nxp-bsp
 #-----choice begin
+# Scarthgap
+repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b refs/tags/KARO-2025-01-29
+# mickledore
 repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b mickledore
 repo init -u https://github.com/karo-electronics/karo-nxp-bsp -b refs/tags/KARO-2024-08-02
 #-----choice end
 repo sync
 
 # Setup Build Directory
-KARO_BASEBOARD=qsbase93
-DISTRO=karo-minimal MACHINE=qs93-5210 source karo-setup-release.sh -b build-qs93-5210 # Not support nodejs
+#-----choice begin
 KARO_BASEBOARD=qsbase93
 DISTRO=karo-xwayland MACHINE=qs93-5210 source karo-setup-release.sh -b build-qs93-5210
-
-# Return
-source setup-environment build-qs93-5210
-
-# Enable sstate cache
-echo SSTATE_MIRRORS = \"file://.* http://sstate.karo-electronics.de/mickledore/PATH\" >> conf/local.conf
-
-#-----choice begin
-bitbake karo-image-minimal
-bitbake karo-image-weston
+# Not support nodejs
+KARO_BASEBOARD=qsbase93
+DISTRO=karo-minimal MACHINE=qs93-5210 source karo-setup-release.sh -b build-qs93-5210
 #-----choice end
 
-# Change Jump to download mode and restart board, no need power off.
+# Enable sstate cache
+#-----choice begin
+echo SSTATE_MIRRORS = \"file://.* http://sstate.karo-electronics.de/scarthgap/PATH\" >> conf/local.conf
+echo SSTATE_MIRRORS = \"file://.* http://sstate.karo-electronics.de/mickledore/PATH\" >> conf/local.conf
+#-----choice end
+
+# Add packages
+
+#-----choice begin
+bitbake karo-image-weston
+bitbake karo-image-minimal
+#-----choice end
+
+# Disable `Local Security Authority protection` to use unsigned drivers in the Windows.
+
+# First time change the jump to H position(download mode)
+# Jump L －＋＋
+# Restart board, no need power off. No need debug micro USB at this time.
 # Set `NXP Semiconductors OO Blank 93` to VM.
 # Set `NXP Semiconductors USB download gadget` to VM.
 # Flash the module
 #-----choice begin
-pushd tmp/deploy/images/qs93-5210/karo-image-minimal
 pushd tmp/deploy/images/qs93-5210/karo-image-weston
+pushd tmp/deploy/images/qs93-5210/karo-image-minimal
 #-----choice end
-wget https://github.com/nxp-imx/mfgtools/releases/download/uuu_1.5.141/uuu
+wget https://github.com/nxp-imx/mfgtools/releases/download/uuu_1.5.182/uuu
 chmod a+x uuu
 sudo ./uuu -v
+
+# Change the jump to L and reset
+# Jump L ＋＋－
+
+# Return to environment
+cd ~/karo-nxp-bsp
+source setup-environment build-qs93-5210
 ```
 
 ## SDK
@@ -85,7 +114,11 @@ sudo ./uuu -v
 bitbake meta-toolchain
 
 # ~/karo-nxp-bsp/build-qs93-5210/tmp/deploy
+pushd tmp/deploy
+#-----choice begin
+./sdk/karo-xwayland-glibc-x86_64-meta-toolchain-cortexa55-qs93-5210-toolchain-6.6-scarthgap.sh -d /opt/
 ./sdk/karo-xwayland-glibc-x86_64-meta-toolchain-cortexa55-qs93-5210-toolchain-6.1-mickledore.sh -d /opt/
+#-----choice end
 
 source /opt/environment-setup-cortexa55-poky-linux
 echo $CC
@@ -162,18 +195,28 @@ CoreMark 1.0 : 6219.257081 / GCC12.3.0 -O2 -DPERFORMANCE_RUN=1  -lrt / Heap
 #define MULTITHREAD 1
 ```
 
-## Packages
+## Conf
+
+`local.conf`
 
 ```bash
 # Disable for write
 # EXTRA_IMAGE_FEATURES += "read-only-rootfs"
+```
 
+### Packages
+
+`local.conf`
+
+```bash
 # rt-tests: cyclictest
+# evtest: test driver event
 IMAGE_INSTALL:append = " \
     htop \
     rt-tests \
     openssh openssh-sftp-server \
     opkg \
+    evtest \
 "
 
 # Electron
@@ -185,6 +228,81 @@ IMAGE_INSTALL:append = " \
     libxscrnsaver \
     nss \
 "
+```
+
+## U-Boot
+
+```bash
+# U-Boot >
+# (Re-)boot the board and “Hit any key to stop autoboot” to get to the U-Boot command line interface
+fastboot usb 0
+# Add `USB download gadget`
+
+mmc list
+mmc dev 0:1
+mmc dev
+ext4ls mmc 0:1 /
+```
+
+## Display
+
+```bash
+## U-BOOT >
+# Check .dtb, remove prefix `imx93-`
+ext4ls mmc 0:1 /
+setenv overlays_qsbase93 ${overlays_qsbase93} karo-lvds-panel karo-panel-tm101jvhg32tm101jvhg32
+saveenv
+reset
+
+printenv overlays_qsbase93
+# default: overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710
+# TM101JVHG32: overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710 karo-lvds-panel karo-panel-tm101jvhg32
+
+# clear
+setenv overlays_qsbase93 ""
+saveenv
+
+env default -a
+saveenv
+
+## Yocto >
+ls /run/user/1000/
+
+export XDG_RUNTIME_DIR=/run/user/1000
+export WAYLAND_DISPLAY=wayland-1
+
+electron --no-sandbox --disable-gpu --ozone-platform=wayland .
+
+ls /tmp/.X11-unix/
+# X0
+```
+
+### Rebuild kernel dtb
+
+```bash
+bitbake -c cleansstate virtual/kernel
+bitbake virtual/kernel
+
+ls tmp/deploy/images/qs93-5210/*.dtb
+```
+
+## Touch
+
+```bash
+root@qs93-5210:~# dmesg | grep -i touch
+# [    0.082563] usbcore: registered new interface driver usbtouchscreen
+# [    0.725105] hid-multitouch 0003:222A:0001.0001: input: USB HID v1.10 Device [ILITEK ILITEK-TP] on usb-ci_hdrc.1-1/input0
+
+# Error
+dmesg | grep -i touch
+# [    0.082505] usbcore: registered new interface driver usbtouchscreen
+lsusb
+# Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
+
+ls /dev/input/
+# by-id  by-path  event0  event1  touchscreen0
+
+# evtest-1.35-2-aarch64.pkg.tar.xz
 ```
 
 ## Electron
@@ -200,73 +318,5 @@ electron main.js --no-sandbox --disable-gpu --headless
 
 # electron exited with signal SIGSEGV
 # Device not have LVDS display
-```
-
-## Display
-
-```bash
-## U-BOOT >
-# Check .dtb, remove prefix `imx93-`
-ext4ls mmc 0:1 /
-#-----choice begin
-setenv overlays_qsbase93 ${overlays_qsbase93} karo-lvds-panel karo-panel-tm101jvhg32tm101jvhg32
-setenv overlays_qsbase93 ${overlays_qsbase93} lvds-panel panel-
-tm101jvhg32tm101jvhg32
-#-----choice end
-saveenv
-reset
-
-printenv overlays_qsbase93
-# overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710 lvds-panel panel-tm101jvhg32
-# overlays_qsbase93=karo-gpu qs93-eqos-lan8710 qs93-fec-lan8710 karo-lvds-panel karo-panel-tm101jvhg32
-
-setenv overlays_qsbase93 ""
-saveenv
-
-setenv fdt_file imx93-qs93-5210.dtb
-saveenv
-
-env default -a
-saveenv
-
-mmc list
-mmc dev 0:1
-mmc dev
-ext4ls mmc 0:1 /
-##
-
-bitbake -c cleansstate virtual/kernel
-bitbake virtual/kernel
-
-ls tmp/deploy/images/qs93-5210/*.dtb
-
-ls /run/user/1000/
-
-export XDG_RUNTIME_DIR=/run/user/1000
-export WAYLAND_DISPLAY=wayland-1
-
-electron --no-sandbox --disable-gpu --ozone-platform=wayland .
-
-ls /tmp/.X11-unix/
-# X0
-```
-
-## Touch
-
-```bash
-root@qs93-5210:~# dmesg | grep -i touch
-[    0.082563] usbcore: registered new interface driver usbtouchscreen
-[    0.725105] hid-multitouch 0003:222A:0001.0001: input: USB HID v1.10 Device [ILITEK ILITEK-TP] on usb-ci_hdrc.1-1/input0
-
-# Error
-dmesg | grep -i touch
-[    0.082505] usbcore: registered new interface driver usbtouchscreen
-lsusb
-Bus 001 Device 001: ID 1d6b:0002 Linux Foundation 2.0 root hub
-
-ls /dev/input/
-by-id  by-path  event0  event1  touchscreen0
-
-evtest-1.35-2-aarch64.pkg.tar.xz
 ```
 
