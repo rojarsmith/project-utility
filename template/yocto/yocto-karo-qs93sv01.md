@@ -250,7 +250,7 @@ ext4ls mmc 0:1 /
 ## U-BOOT >
 # Check .dtb, remove prefix `imx93-`
 ext4ls mmc 0:1 /
-setenv overlays_qsbase93 ${overlays_qsbase93} karo-lvds-panel karo-panel-tm101jvhg32tm101jvhg32
+setenv overlays_qsbase93 ${overlays_qsbase93} karo-lvds-panel karo-panel-tm101jvhg32
 saveenv
 reset
 
@@ -264,17 +264,6 @@ saveenv
 
 env default -a
 saveenv
-
-## Yocto >
-ls /run/user/1000/
-
-export XDG_RUNTIME_DIR=/run/user/1000
-export WAYLAND_DISPLAY=wayland-1
-
-electron --no-sandbox --disable-gpu --ozone-platform=wayland .
-
-ls /tmp/.X11-unix/
-# X0
 ```
 
 ### Rebuild kernel dtb
@@ -428,22 +417,22 @@ lsusb
 
 ls /dev/input/
 # by-id  by-path  event0  event1  touchscreen0
-
-# evtest-1.35-2-aarch64.pkg.tar.xz
 ```
 
 ## Electron
 
 Ubuntu 22.04 need 24GB RAM, 16GB can't compile nodejs.
 
+Q: electron exited with signal SIGSEGV
+A: Device not have LVDS display
+
 ```bash
-ps aux | grep Xwayland
+## Yocto >
+ls /run/user/1000/
 
-echo $DISPLAY
+export XDG_RUNTIME_DIR=/run/user/1000
+export WAYLAND_DISPLAY=wayland-1
 
-electron main.js --no-sandbox --disable-gpu --headless
-
-# electron exited with signal SIGSEGV
-# Device not have LVDS display
+electron --no-sandbox --disable-gpu --ozone-platform=wayland .
 ```
 
