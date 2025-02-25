@@ -1,0 +1,158 @@
+commit eab913cdf37f760a3253b6dc7194291e68c36c59
+Author: Markus Bauer <mb@karo-electronics.de>
+Date:   Thu Feb 3 12:12:52 2022 +0100
+
+    hello-word project for cross-compiling and debugging
+
+diff --git a/.vscode/launch.json b/.vscode/launch.json
+new file mode 100644
+index 0000000..e5da65b
+--- /dev/null
++++ b/.vscode/launch.json
+@@ -0,0 +1,28 @@
++{
++    "version": "0.2.0",
++    "configurations": [
++        {
++            "name": "GDB-Debug",
++            "type": "cppdbg",
++            "request": "launch",
++            "program": "${config:BINARY}",
++            "args": [],
++            "stopAtEntry": true,
++            "cwd": "${workspaceFolder}",
++            "environment": [],
++            "console": "integratedTerminal",
++            "MIMode": "gdb",
++            "targetArchitecture": "arm64",
++            "preLaunchTask": "deploy",
++            "setupCommands": [
++                {
++                    "description": "Pretty-printing for gdb",
++                    "text": "-enable-pretty-printing",
++                    "ignoreFailures": true
++                }
++            ],
++            "miDebuggerPath": "/usr/bin/gdb-multiarch",
++            "miDebuggerServerAddress": "${config:TARGET_IP}:${config:DEBUG_PORT}",
++        }
++    ]
++}
+diff --git a/.vscode/settings.json b/.vscode/settings.json
+new file mode 100644
+index 0000000..31da1b0
+--- /dev/null
++++ b/.vscode/settings.json
+@@ -0,0 +1,7 @@
++{
++    "TARGET_IP":"192.168.101.250",
++    "DEBUG_PORT":"6666",
++    "BINARY":"hello-world.bin",
++
++    "SDK_DIR":"/opt/karo-wayland/5.10-hardknott/environment-setup-cortexa53-crypto-poky-linux",
++}
+diff --git a/.vscode/tasks.json b/.vscode/tasks.json
+new file mode 100644
+index 0000000..7d85c57
+--- /dev/null
++++ b/.vscode/tasks.json
+@@ -0,0 +1,44 @@
++{
++    // See https://go.microsoft.com/fwlink/?LinkId=733558
++    // for the documentation about the tasks.json format
++    "version": "2.0.0",
++    "tasks": [
++        {
++            "label": "cross-compile",
++            "type": "shell",
++            "command": "sh",
++            "args": [
++                "cross-compile.sh",
++                "${config:SDK_DIR}",
++            ],
++            "problemMatcher": [],
++            "group": {
++                "kind": "build",
++                "isDefault": true
++            }
++        },
++        {
++            "label": "deploy",
++            "isBackground": true,
++            "type": "shell",
++            "command": "sh",
++            "args": [
++                "deploy.sh",
++                "${config:TARGET_IP}",
++                "${config:DEBUG_PORT}",
++                "${config:BINARY}"
++            ],
++            "problemMatcher": {
++                "base": "$gcc",
++                "background": {
++                    "activeOnStart": true,
++                    "beginsPattern": "${config:BINARY}",
++                    "endsPattern": "Listening on port [0-9]{4}"
++                }
++            },
++            "dependsOn": [
++                "cross-compile"
++            ],
++        },
++    ]
++}
+diff --git a/Makefile b/Makefile
+new file mode 100644
+index 0000000..a47d47e
+--- /dev/null
++++ b/Makefile
+@@ -0,0 +1,4 @@
++all: hello-world.c
++	$(CXX) $(CXXFLAGS) -Og hello-world.c -g -o hello-world.bin 
++clean:
++	rm -f hello-world.bin
+diff --git a/cross-compile.sh b/cross-compile.sh
+new file mode 100644
+index 0000000..7c10214
+--- /dev/null
++++ b/cross-compile.sh
+@@ -0,0 +1,5 @@
++#!/bin/bash
++SDK_DIR="$1"
++
++. ${SDK_DIR}
++make clean; make -j$(nproc)
+diff --git a/deploy.sh b/deploy.sh
+new file mode 100644
+index 0000000..aa4f764
+--- /dev/null
++++ b/deploy.sh
+@@ -0,0 +1,14 @@
++#!/bin/bash
++DEST_IP="$1"
++DEBUG_PORT="$2"
++BINARY="$3"
++DEST_DIR="/root"
++
++# kill gdbserver on tx8m and delete old binary
++ssh root@${DEST_IP} "sh -c '/usr/bin/killall -q gdbserver; rm -rf ${DEST_DIR}/${BINARY}  exit 0'"
++
++# send binary to target
++scp ${BINARY} root@${DEST_IP}:${DEST_DIR}/${BINARY}
++
++# start gdbserver on target
++ssh -t root@${DEST_IP} "sh -c 'cd ${DEST_DIR}; gdbserver localhost:${DEBUG_PORT} ${BINARY}'"
+diff --git a/hello-world.c b/hello-world.c
+new file mode 100644
+index 0000000..5823e4b
+--- /dev/null
++++ b/hello-world.c
+@@ -0,0 +1,8 @@
++#include <stdio.h>
++
++int main(int argc, char *argv[]) {
++    int i = 0;
++    i = i + 10;
++    printf("Hello, World!\n");
++    return 0;
++}

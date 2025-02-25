@@ -106,6 +106,9 @@ sudo ./uuu -v
 # Return to environment
 cd ~/karo-nxp-bsp
 source setup-environment build-qs93-5210
+
+bitbake -c cleansstate karo-image-weston
+bitbake -c listtasks karo-image-weston
 ```
 
 ## SDK
@@ -124,8 +127,77 @@ source /opt/environment-setup-cortexa55-poky-linux
 echo $CC
 # aarch64-poky-linux-gcc -mcpu=cortex-a55 -march=armv8.2-a+crypto -mbranch-protection=standard -fstack-protector-strong -O2 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Werror=format-security --sysroot=/opt/sysroots/cortexa55-poky-linux
 
-$CC helloWorld.c -o hello
+$CC hello.c -o hello
 ```
+
+`hello.c`
+
+```c
+#include <stdio.h>
+int main() {
+   printf("Hello, World!");
+   return 0;
+}
+```
+
+## VS Code Cross-Compilation
+
+```bash
+#-----choice begin
+sudo apt update
+sudo apt install software-properties-common apt-transport-https curl
+
+curl -sSL https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+
+sudo add-apt-repository "deb [arch=amd64] https://packages.microsoft.com/repos/vscode stable main"
+
+sudo apt update
+sudo apt install code
+# or
+sudo snap install --classic code
+#-----choice end
+code --install-extension ms-vscode.cpptools
+sudo apt install build-essential gdb gdb-multiarch
+
+# for karo-image-minimal you have to edit conf/local.conf
+# EXTRA_IMAGE_FEATURES += "read-only-rootfs"
+(...)
+IMAGE_FEATURES:append = " \
+      ssh-server-openssh \
+"
+
+bitbake karo-image-weston -c populate_sdk
+
+mkdir hello-word
+cd hello-word
+yocto-karo-cross-hello-world.patch
+patch -p1 < yocto-karo-cross-hello-world.patch
+```
+
+It’s enough to fit the target’s **IP-address** and the **path** your SDK was installed to.
+
+`.vscode/settings.json`
+
+```json
+{
+    "TARGET_IP":"192.168.24.162",
+    "DEBUG_PORT":"6666",
+    "BINARY":"hello-world.bin",
+
+    "SDK_DIR":"/opt/environment-setup-cortexa55-poky-linux",
+}
+```
+
+Run Build Task (CTRL + SHIFT + B).
+
+This will execute the `cross-compile.sh` script and generate the **hello-world.bin** output file.
+
+```bash
+scp hello-world.bin root@<target-ip>:/root/
+/root/hello-world.bin
+```
+
+Run and Debug.
 
 ## CoreMark
 
