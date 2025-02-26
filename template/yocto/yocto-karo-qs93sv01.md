@@ -584,5 +584,7 @@ rauc --cert <path-to-cert>/cert.pem --key <path-to-key>/key.pem bundle content-d
 ...meta-karo-distro/dynamic-layers/recipes-core/bundles/files/private/development-1.key.pem
 
 rauc install <path-to-bundle>/update-2024-06-14.raucb
+
+# Custom partitioning system.conf under <your-bsp>/layers/meta-karo-distro/dynamic-layers/recipes-core/rauc/files/
 ```
 
