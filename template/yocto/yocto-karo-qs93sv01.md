@@ -81,6 +81,7 @@ echo SSTATE_MIRRORS = \"file://.* http://sstate.karo-electronics.de/mickledore/P
 
 #-----choice begin
 bitbake karo-image-weston
+# for RAUC OTA
 bitbake karo-image-minimal
 #-----choice end
 
@@ -123,6 +124,7 @@ pushd tmp/deploy
 ./sdk/karo-xwayland-glibc-x86_64-meta-toolchain-cortexa55-qs93-5210-toolchain-6.1-mickledore.sh -d /opt/
 #-----choice end
 
+# Load environment
 source /opt/environment-setup-cortexa55-poky-linux
 echo $CC
 # aarch64-poky-linux-gcc -mcpu=cortex-a55 -march=armv8.2-a+crypto -mbranch-protection=standard -fstack-protector-strong -O2 -D_FORTIFY_SOURCE=2 -Wformat -Wformat-security -Werror=format-security --sysroot=/opt/sysroots/cortexa55-poky-linux
@@ -284,6 +286,7 @@ CoreMark 1.0 : 6219.257081 / GCC12.3.0 -O2 -DPERFORMANCE_RUN=1  -lrt / Heap
 # rt-tests: cyclictest
 # evtest: test driver event
 IMAGE_INSTALL:append = " \
+    git \
     htop \
     rt-tests \
     openssh openssh-sftp-server \
@@ -291,14 +294,20 @@ IMAGE_INSTALL:append = " \
     evtest \
 "
 
-# Electron
+# Electron, nodejs and nodejs-npm is large
 IMAGE_INSTALL:append = " \
-    git \
     nodejs \
     nodejs-npm \
     cups \
     libxscrnsaver \
     nss \
+"
+
+# RAUC
+IMAGE_INSTALL:append = " \
+    alternatives-symlinks-relative \
+    rauc \
+    u-boot-fw-utils \
 "
 ```
 
@@ -506,5 +515,74 @@ export XDG_RUNTIME_DIR=/run/user/1000
 export WAYLAND_DISPLAY=wayland-1
 
 electron --no-sandbox --disable-gpu --ozone-platform=wayland .
+```
+
+## RAUC
+
+QS93 not support by official.
+
+```bash
+sudo apt install perl
+```
+
+`<your-bsp>/layers/meta-karo-distro/dynamic-layers/recipes-core/rauc/files/system.conf`
+
+```ini
+[system]
+compatible=txmp-1570
+bootloader=uboot
+data-directory=/data/
+```
+
+UBoot
+
+```bash
+setenv boot_mode mmc_rauc
+saveenv
+
+# If the boot_mode is set to mmc, the boot script will not be used and rauc can't switch between partitions.
+
+rauc service &
+
+# in linux on the board to activate rauc.
+```
+
+Host PC
+
+```bash
+sudo apt-get install build-essential meson libtool libdbus-1-dev libglib2.0-dev libcurl3-dev libssl-dev
+sudo apt install libnl-genl-3-dev
+
+git clone https://github.com/rauc/rauc
+cd rauc
+meson setup build
+meson compile -C build # or 'ninja -C build' on meson < 0.54.0
+pushd build
+meson install
+
+# Start the rauc service on the module
+rauc service &
+
+mkdir content-dir/
+cp <path-to-new-rootfs>/rootfs.ext4 content-dir/
+
+cat >> content-dir/manifest.raucm << EOF
+[update]
+compatible=<your-board>    (e.g. txmp-1570)
+version=2024-06-14
+
+[bundle]
+format=verity
+
+[image.rootfs]
+filename=rootfs.ext4
+EOF
+
+rauc --cert <path-to-cert>/cert.pem --key <path-to-key>/key.pem bundle content-dir/ update-2024-06-14.raucb
+
+...meta-karo-distro/dynamic-layers/recipes-core/bundles/files/development-1.cert.pem
+...meta-karo-distro/dynamic-layers/recipes-core/bundles/files/private/development-1.key.pem
+
+rauc install <path-to-bundle>/update-2024-06-14.raucb
 ```
 
