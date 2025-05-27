@@ -13,4 +13,3 @@ git@github.com:rojarsmith/stm32f746g-disco-ota-client.git
 git@github.com:rojarsmith/stm32h7b3ieval-ota-client.git
 git@github.com:rojarsmith/stream-relay-nodejs.git
 git@github.com:rojarsmith/win32api-concept.git
-git@github.com:rojarsmith/zencat.git

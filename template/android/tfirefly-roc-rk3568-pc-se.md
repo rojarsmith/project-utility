@@ -91,7 +91,7 @@ g.co/AndroidDeviceRegistration
 
 ## adb
 
-```shell
+```bash
 adb devices
 adb root
 adb shell # The # symbol at the beginning is the root state
@@ -99,7 +99,7 @@ adb shell dumpsys cpuinfo
 adb shell monkey # stress test
 adb reboot recovery
 adb reboot loader # No screen
-adb logcat | find "BootAnimation"
+adb logcat | grep BootAnimation
 ```
 
 ## fetch doc
