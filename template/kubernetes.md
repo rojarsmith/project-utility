@@ -249,3 +249,78 @@ helm rollback mcs-lite-app 1
 helm install ./charts/mcs-lite-chart-0.1.0.tgz
 ```
 
+## Akamai Linode Kubernetes Cluster（LKE）
+
+dockerfile
+
+```dockerfile
+FROM openjdk:21
+COPY springbact-node.jar app.jar
+ENTRYPOINT ["java", "-jar", "/app.jar"]
+```
+
+service.yaml
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: spring-demo-service
+spec:
+  selector:
+    app: spring-demo
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 8080
+  type: LoadBalancer
+```
+
+deployment.yaml
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spring-demo
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: spring-demo
+  template:
+    metadata:
+      labels:
+        app: spring-demo
+    spec:
+      containers:
+      - name: spring-demo
+        image: rojarsmith/spring-k8s-demo
+        ports:
+        - containerPort: 8080
+```
+
+```bash
+docker build -t rojarsmith/spring-k8s-demo .
+docker login
+docker push rojarsmith/spring-k8s-demo
+
+$env:KUBECONFIG = "D:\k8s\cluster-1-kubeconfig.yaml"
+
+kubectl get nodes
+kubectl apply -f deployment.yaml
+kubectl apply -f service.yaml
+kubectl get svc spring-demo-service
+
+http://172.232.179.115/node
+
+kubectl get pods -o wide
+kubectl logs spring-demo-6c5bd786fb-q87jt
+kubectl rollout restart deployment spring-demo
+kubectl delete pod spring-demo-f944c8d4d-62kfp
+
+kubectl get deployment spring-demo -o yaml | grep replicas
+kubectl get deployment spring-demo -o yaml
+kubectl get pods | grep Error | awk '{print $1}' | xargs kubectl delete pod
+```
+
