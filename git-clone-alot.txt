@@ -9,6 +9,5 @@ git@github.com:rojarsmith/outlook-email-exchange.git
 git@github.com:rojarsmith/quantcat.git
 git@github.com:rojarsmith/springbact.git
 git@github.com:rojarsmith/stm32-knight.git
-git@github.com:rojarsmith/stm32h7b3ieval-ota-client.git
 git@github.com:rojarsmith/stream-relay-nodejs.git
 git@github.com:rojarsmith/win32api-concept.git
