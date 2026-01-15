@@ -15,6 +15,8 @@ sudo sh -c "echo 'deb [signed-by=/usr/share/postgresql-common/pgdg/apt.postgresq
 
 sudo apt update
 sudo apt install postgresql-18
+
+tail /var/log/postgresql/postgresql-18-main.log
 ```
 
 ## Remote Access
@@ -99,6 +101,9 @@ sudo certbot certonly \
 --dns-cloudflare-propagation-seconds 60 \
 --email user@gmail.com
 
+FC_CA="/etc/letsencrypt/live/$(ls /etc/letsencrypt/live | grep -v README | head -n 1)/fullchain.pem"
+PV_KE="/etc/letsencrypt/live/$(ls /etc/letsencrypt/live | grep -v README | head -n 1)/fullchain.pem"
+
 sudo vi /etc/postgresql/18/main/postgresql.conf
 
 ssl = on
@@ -109,6 +114,13 @@ ssl_ciphers = 'HIGH:MEDIUM:+3DES:!aNULL'
 
 sudo chown postgres:postgres /etc/letsencrypt/live/db.example.com/privkey.pem
 sudo chmod 600 /etc/letsencrypt/live/db.example.com/privkey.pem
+
+sudo chown postgres:postgres $FC_CA
+sudo chmod 600 $FC_CA
+sudo namei -l /etc/letsencrypt/live/psql.neuhex.com/fullchain.pem f: /etc/letsencrypt/live/psql.neuhex.com/fullchain.pem
+sudo -u postgres cat /etc/letsencrypt/live/psql.neuhex.com/fullchain.pem
+sudo -u postgres cat "$FC_CA" > /dev/null
+sudo chown postgres:postgres /etc/letsencrypt/archive
 
 sudo vi /etc/letsencrypt/renewal-hooks/deploy/reload-postgresql.sh
 
