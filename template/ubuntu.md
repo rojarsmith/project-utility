@@ -8,6 +8,7 @@
 screen -S upgrade
 
 # Old MongoDB
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 656408E390CFB1F5
 sudo mv /etc/apt/sources.list.d/mongodb-org-4.4.list \
         /etc/apt/sources.list.d/mongodb-org-4.4.list.disabled
 
