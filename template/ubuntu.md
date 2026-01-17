@@ -1,5 +1,11 @@
 # Ubuntu
 
+## Auto Update
+
+```bash
+sudo dpkg-reconfigure unattended-upgrades
+```
+
 ## Upgrade
 
 ```bash
