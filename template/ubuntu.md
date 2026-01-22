@@ -25,3 +25,13 @@ sudo reboot
 lsb_release -a
 ```
 
+## Shell Working Directory Reporting
+
+Support OSC 1337.
+
+`~/.bash_profile`
+
+```bash
+export PS1="$PS1\[\e]1337;CurrentDir="'$(pwd)\a\]'
+```
+
