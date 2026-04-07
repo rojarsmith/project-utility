@@ -59,7 +59,7 @@ $STWSV/$STECOF/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.
 # Binaries path
 /home/srv/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2
 
-# Download cost long time
+# Download cost long time, USB3.0 cost 30 minutes
 # If the download fails, try entering DFU mode on the MCU M33 and then exiting
 # Change DIP after download
 
@@ -2667,6 +2667,151 @@ class ParkourPainter extends CustomPainter {
     return oldDelegate.playerY != playerY || oldDelegate.obstacleX != obstacleX;
   }
 }
+```
+
+### M33
+
+```bash
+cd $STWSV
+unzip st-stm32cubeide_2.1.1_28236_20260312_0043_amd64.deb_bundle.sh.zip
+chmod +x st-stm32cubeide_2.1.1_28236_20260312_0043_amd64.deb_bundle.sh
+sudo ./st-stm32cubeide_2.1.1_28236_20260312_0043_amd64.deb_bundle.sh
+
+cd $STWSV/$STECOF/Developer-Package
+unzip stm32cubemp2-v1-3-0.zip
+
+# Load
+$STWSV/$STECOF/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp257f-dk-ca35tdcid-ostl-m33-examples-optee.tsv
+
+# Binaries path
+/home/srv/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2
+
+sudo apt-get install -y git curl wget build-essential libssl-dev python3 python3-pip cmake make libncurses5
+
+sudo apt-get install -y libncurses6 libncurses-dev
+
+cmake --version
+
+# error: externally-managed-environment
+sudo apt install -y python3-full
+pip install pyelftools
+pip install pycryptodomex
+wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libtinfo5_6.3-2ubuntu0.1_amd64.deb
+wget http://security.ubuntu.com/ubuntu/pool/universe/n/ncurses/libncurses5_6.3-2ubuntu0.1_amd64.deb
+sudo apt install ./libtinfo5_6.3-2ubuntu0.1_amd64.deb ./libncurses5_6.3-2ubuntu0.1_amd64.deb
+sudo chmod +x python3-pyelftools_0.30-1_all.deb
+sudo dpkg -i python3-pyelftools_0.30-1_all.deb
+python -c "import elftools; print(elftools.__version__)"
+sudo dpkg -i python3-pycryptodome_3.20.0+dfsg-3_amd64.deb
+dpkg -l | grep python3-pycryptodome
+
+sudo apt install python3-pyelftools # Not work
+sudo apt install python3-pycryptodomex # Not work
+
+# File menu > Import > Existing Project into Workspace
+
+# Root directory
+/home/srv/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package/STM32Cube_FW_MP2_V1.3.0/Projects/STM32MP257F-DK/Applications/OpenAMP/OpenAMP_TTY_echo/STM32CubeIDE
+
+# Select project OpenAMP_TTY_Echo_CM33_NonSecure and choose CA35TDCID_m33_ns_sign build configuration
+
+# Open console on serial device
+
+# Serial Target widget status
+# STM32Cobe > Target Status
+
+# In case of different statuses such as busy or console in use
+# Window > Preferences > STM32Cube > MPU Serial
+# /dev/ttyACM0
+
+# Run configuration: create it by right-clicking on " OpenAMP_TTY_echo_CM33_NonSecure and selecting Run As and STM32 C/C++ Application. It opens the Embedded C/C++ Application window.
+
+# Click the OK button. It opens the Edit the Configuration window. You may modify the name of the run configuration and must replace CA35TDCID_m33_ns_sign/OpenAMP_TTY_echo_CM33_NonSecure.elf with CA35TDCID_m33_ns_sign/OpenAMP_TTY_echo_CM33_NonSecure_sign.bin as shown in the following picture and press the OK button.
+
+# Load Mode > Thru Linux core
+
+# Run Configurations > Run
+
+# Now the firmware is loaded. To debug it, a debug configuration is needed. Create it by right-clicking on OpenAMP_TTY_echo_CM33_NonSecure and selecting Debug As and STM32 C/C++ Application. It will open the Embedded C/C++ Application window.
+
+# In the Edit the Configuration window, click the OK button. Click on the Startup tab and select the file. You may modify the name by adding _Debug
+
+# Then click on the Edit button, in the Add/Edit item, uncheck Download and click OK.
+
+# Click OK in the Edit Configuration where there is a False for the download.
+
+# The debug perspective is started. If not, proceed in the same way as the run configuration but with the debug button instead. Press the suspend button, and the firmware will stop.
+
+# In "production mode", the firmware does not break at main. GDB is simply attached to the running target. You can then use all features of the debugger.
+
+### Board >
+
+stty -onlcr -echo -F /dev/ttyRPMSG0
+cat /dev/ttyRPMSG0 &
+echo "Hello Virtual UART0" > /dev/ttyRPMSG0
+
+# Terminate the STM32CubeIDE debug session will stop the firmware.
+
+# Modify the main.c
+
+# Then open the properties of the project by right-clicking on it and selecting Properties.
+# Go to C/C++ Build > Settings > MCU GCC Compiler > Preprocessor
+# Add a new symbol: __LOG_TRACE_IO_
+
+# By clicking on the Run button, you can download the firmware. Then, by clicking on the Debug button, the STM32CubeIDE relaunches the debug session after performing an incremental build to account for your modifications.
+# If everything is correct, you will switch back to the Debug Perspective window after reloading the new firmware.
+
+stty -onlcr -echo -F /dev/ttyRPMSG0
+stty -onlcr -echo -F /dev/ttyRPMSG1
+
+cat /dev/ttyRPMSG0 &
+cat /dev/ttyRPMSG1 &
+
+echo "Hello Virtual UART0" > /dev/ttyRPMSG0
+
+echo "Hello Virtual UART1" > /dev/ttyRPMSG1
+
+### PC >
+
+# On STM32MP2 series: When the firmware is running, log traces are output on an external terminal through a UART peripheral. For instance, the terminal is available on a Linux PC at /dev/ttyACM1:
+minicom -D /dev/ttyACM1
+```
+
+`main.c`
+
+```c
+  /* Infinite loop */
+  /* USER CODE BEGIN WHILE */
+  while (1)
+  {
+
+    OPENAMP_check_for_message();
+
+    /* USER CODE END WHILE */
+    if (VirtUart0RxMsg) {
+      char msg_to_transmit[MAX_BUFFER_SIZE];
+      int msg_size = 0;
+      VirtUart0RxMsg = RESET;
+
+      msg_size = snprintf(msg_to_transmit, MAX_BUFFER_SIZE, "Channel RPMSG0: ");
+      msg_size += snprintf(msg_to_transmit + msg_size, MAX_BUFFER_SIZE, "%s\n", VirtUart0ChannelBuffRx);
+      log_info("size of the message to transmit = %d bytes\n", msg_size);
+      VIRT_UART_Transmit(&huart0, (uint8_t*)msg_to_transmit, msg_size);
+    }
+
+    if (VirtUart1RxMsg) {
+      char msg_to_transmit[MAX_BUFFER_SIZE];
+      uint16_t msg_size = 0;
+      VirtUart1RxMsg = RESET;
+
+      msg_size = snprintf(msg_to_transmit, MAX_BUFFER_SIZE, "Channel RPMSG1: ");
+      msg_size += snprintf(msg_to_transmit + msg_size, MAX_BUFFER_SIZE, "%s\n", VirtUart1ChannelBuffRx);
+      log_info("size of the message to transmit = %d bytes\n", msg_size);
+      VIRT_UART_Transmit(&huart1, (uint8_t*)msg_to_transmit, msg_size);
+    }
+    /* USER CODE BEGIN 3 */
+  }
+  /* USER CODE END 3 */
 ```
 
 ## Distribution Package
