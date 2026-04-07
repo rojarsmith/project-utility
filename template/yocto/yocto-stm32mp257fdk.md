@@ -2,21 +2,30 @@
 
 The official OpenSTLinux defaults support PCAP Touch IC with common USB interfaces, using Type-A.
 
+## Parameter
+
+Run each time.
+
+```bash
+STCPV=2.22.0 # Version of Cube Programmer
+STWSV=$HOME/STM32MPU_workspace
+STECOF=STM32MPU-Ecosystem-v6.2.0
+BUSBIP=192.168.7.1 # Board USB Net IP
+```
+
 ## Starter Package
 
 ```bash
 mkdir $HOME/STM32MPU_workspace
 cd $HOME/STM32MPU_workspace
 
-
+# May cost long time in vm
 wget -q www.google.com && echo "Internet access over HTTP/HTTPS is OK !" || echo "No internet access over HTTP/HTTPS ! You may need to set up a proxy."
 
-STCPV=2.22.0
-
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Tools/STM32CubeProgrammer-$STCPV
-mkdir $HOME/STM32MPU_workspace/tmp
-cd $HOME/STM32MPU_workspace/tmp
+mkdir $STWSV/STM32MPU-Tools
+mkdir $STWSV/STM32MPU-Tools/STM32CubeProgrammer-$STCPV
+mkdir $STWSV/tmp
+cd $STWSV/tmp
 
 unzip SetupSTM32CubeProgrammer_linux_64.zip
 ./SetupSTM32CubeProgrammer-$STCPV.linux
@@ -25,28 +34,34 @@ export PATH=/home/srv/STMicroelectronics/STM32Cube/STM32CubeProgrammer/bin:$PATH
 
 sudo apt-get install libusb-1.0-0
 
-cd /home/srv/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers/rules
+cd $HOME/STMicroelectronics/STM32Cube/STM32CubeProgrammer/Drivers/rules
 
 sudo cp *.* /etc/udev/rules.d/
 
-# 
-
 STM32_Programmer_CLI -l usb
+# DFU Interface
 # Product ID: DFU in HS Mode @Device ID /0x505, @Revision ID /0x2000
 
 STM32_Programmer_CLI --h
 
-STECOF=STM32MPU-Ecosystem-v6.2.0
+cd $STWSV
+mkdir $STWSV/$STECOF
+mkdir $STWSV/$STECOF/Starter-Package
+cd $STWSV/$STECOF/Starter-Package
 
-cd $HOME/STM32MPU_workspace
-mkdir $HOME/STM32MPU_workspace/$STECOF
-mkdir $HOME/STM32MPU_workspace/$STECOF/Starter-Package
-cd $HOME/STM32MPU_workspace/$STECOF/Starter-Package
-tar xvf FLASH-stm32mp2-openstlinux-6.6-yocto-scarthg ap-mpu-v26.02.18.tar.gz
+tar xvf FLASH-stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz
 
-$HOME/STM32MPU_workspace/$STECOF/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp257f-dk-optee.tsv
+# Open STM32 Cube Programmer
 
-/home/srv/STM32MPU_workspace/$STECOF/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2
+# Load
+$STWSV/$STECOF/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2/flashlayout_st-image-weston/optee/FlashLayout_sdcard_stm32mp257f-dk-optee.tsv
+
+# Binaries path
+/home/srv/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Starter-Package/stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/images/stm32mp2
+
+# Download cost long time
+# If the download fails, try entering DFU mode on the MCU M33 and then exiting
+# Change DIP after download
 
 sudo apt-get install minicom
 
@@ -70,18 +85,18 @@ cat /proc/version
 # Disk
 df -h
 
-ip addr show usb0
+ip addr show usb0 # USB Gadget Ethernet
 
 # Time error, apt cannot function
 sudo apt update
-date -s "2026-03-30 12:00:00"
+date -s "2026-04-02 07:39:00"
 
 # Check display
 modetest -c
 
 ### PC >
 
-ssh root@192.168.7.1
+ssh root@$BUSBIP
 ```
 
 ## Developer Package
@@ -110,15 +125,16 @@ curl -s https://storage.googleapis.com/git-repo-downloads/repo.asc | gpg --verif
 echo 'options mmc_block perdev_minors=16' > /tmp/mmc_block.conf
 sudo mv /tmp/mmc_block.conf /etc/modprobe.d/mmc_block.conf
 
-mkdir $HOME/STM32MPU_workspace/$STECOF/Developer-Package
+mkdir $STWSV/$STECOF/Developer-Package
+cd $STWSV/$STECOF/Developer-Package
 
 tar xvf SDK-x86_64-stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz
 
 chmod +x stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sdk/st-image-weston-openstlinux-weston-stm32mp2.rootfs-x86_64-toolchain-5.0.15-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.sh
 
-./stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sdk/st-image-weston-openstlinux-weston-stm32mp2.rootfs-x86_64-toolchain-5.0.15-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.sh -d $HOME/STM32MPU_workspace/$STECOF/Developer-Package/SDK
+./stm32mp2-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sdk/st-image-weston-openstlinux-weston-stm32mp2.rootfs-x86_64-toolchain-5.0.15-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.sh -d $STWSV/$STECOF/Developer-Package/SDK
 
-cd $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package 
+cd $STWSV/$STECOF/Developer-Package 
 source SDK/environment-setup-cortexa35-ostl-linux
 
 echo $ARCH
@@ -129,11 +145,11 @@ $CC --version
 
 echo $OECORE_SDK_VERSION
 
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package/stm32mp2-openstlinux-26.02.18
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package/stm32mp2-openstlinux-26.02.18/sources
+mkdir $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18
+mkdir $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources
 
-mkdir $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/gtk_hello_world_example/
-cd $HOME/STM32MPU_workspace/STM32MPU-Ecosystem-v6.2.0/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/gtk_hello_world_example/
+mkdir $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/gtk_hello_world_example/
+cd $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/gtk_hello_world_example/
 ```
 
 `gtk_hello_world.c`
@@ -211,20 +227,24 @@ clean:
 ```bash
 make
 
-scp gtk_hello_world root@192.168.7.1:/usr/local
+scp gtk_hello_world root@$BUSBIP:/usr/local
 
-## Board >
+### Board >
 
 cd /usr/local/
 su -l weston -c "/usr/local/gtk_hello_world"
 
-cd $HOME/STM32MPU_workspace/$STECOF/Developer-Package
+### PC >
+
+cd $STWSV/$STECOF/Developer-Package
+source SDK/environment-setup-cortexa35-ostl-linux
 
 tar xvf SOURCES-stm32mp-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz
 
 cd stm32mp-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sources/ostl-linux/linux-stm32mp-6.6.116-stm32mp-r3-r0
 
 tar xvf linux-6.6.116.tar.xz
+
 cd linux-6.6.116
 for p in `ls -1 ../*.patch`; do patch -p1 < $p; done
 
@@ -232,7 +252,9 @@ export OUTPUT_BUILD_DIR=$PWD/../build
 mkdir -p ${OUTPUT_BUILD_DIR}
 
 make O="${OUTPUT_BUILD_DIR}" defconfig fragment*.config
+
 for f in `ls -1 ../fragment*.config`; do scripts/kconfig/merge_config.sh -m -r -O ${OUTPUT_BUILD_DIR} ${OUTPUT_BUILD_DIR}/.config $f; done
+
 (yes '' || true) |  make oldconfig O="${OUTPUT_BUILD_DIR}"
 
 make -j$(nproc) Image.gz vmlinux dtbs O="${OUTPUT_BUILD_DIR}"
@@ -241,20 +263,23 @@ export IMAGE_KERNEL="Image.gz"
 make -j$(nproc) modules O="${OUTPUT_BUILD_DIR}"
 
 make INSTALL_MOD_PATH="${OUTPUT_BUILD_DIR}/install_artifact" modules_install O="${OUTPUT_BUILD_DIR}"
+
 mkdir -p ${OUTPUT_BUILD_DIR}/install_artifact/boot/
+
 cp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/${IMAGE_KERNEL} ${OUTPUT_BUILD_DIR}/install_artifact/boot/
 find ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/dts/ -name 'st*.dtb' -exec cp '{}' ${OUTPUT_BUILD_DIR}/install_artifact/boot/ \;
 
 cd ${OUTPUT_BUILD_DIR}/install_artifact
-scp -r boot/* root@192.168.7.1:/boot/
+scp -r boot/* root@$BUSBIP:/boot/
 
 rm lib/modules/6.6.116/build
 
 find . -name "*.ko" | xargs $STRIP --strip-debug --remove-section=.comment --remove-section=.note --preserve-dates
 
-scp -r lib/modules/* root@192.168.7.1:/lib/modules
+scp -r lib/modules/* root@$BUSBIP:/lib/modules
 
-## Board >
+### Board >
+
 /sbin/depmod -a
 
 sync
@@ -264,9 +289,9 @@ reboot
 # Using the Linux console, check that there is no log information when the display driver is probed
 dmesg | grep -i modified
 
-## PC >
+### PC >
 
-cd $HOME/STM32MPU_workspace/$STECOF/Developer-Package/stm32mp-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sources/ostl-linux/linux-stm32mp-6.6.116-stm32mp-r3-r0/linux-6.6.116
+cd $STWSV/$STECOF/Developer-Package/stm32mp-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18/sources/ostl-linux/linux-stm32mp-6.6.116-stm32mp-r3-r0/linux-6.6.116
 ```
 
 `./drivers/pinctrl/stm32/pinctrl-stm32.c`
@@ -284,12 +309,15 @@ int stm32_pctl_probe(struct platform_device *pdev)
 ```bash
 make -j$(nproc) Image.gz O="${OUTPUT_BUILD_DIR}"
 
-scp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/Image.gz root@192.168.7.1:/boot
+scp ${OUTPUT_BUILD_DIR}/arch/${ARCH}/boot/Image.gz root@$BUSBIP:/boot
 
-## Board >
+###  Board >
+
 reboot
 
 dmesg | grep -i modified
+# [    2.177180] stm32mp257-pinctrl soc@0:pinctrl@44240000: I modified a linux kernel device driver
+# [    2.200008] stm32mp257-pinctrl soc@0:pinctrl@46200000: I modified a linux kernel device driver
 ```
 
 ## Flutter
@@ -298,89 +326,81 @@ dmesg | grep -i modified
 sudo apt update
 sudo apt install -y curl git unzip xz-utils zip cmake ninja-build pkg-config clang
 
-find /opt/st -name 'environment-setup-*'
-source /opt/st/stm32mp2-sdk/environment-setup-*
+cd $STWSV/$STECOF/Developer-Package 
+source SDK/environment-setup-cortexa35-ostl-linux
+
 echo "$CC"
 echo "$CXX"
 echo "$SDKTARGETSYSROOT"
 
-flutter-elinux-3.27.1
-
-# Load ST SDK
-source /opt/st/stm32mp2-sdk/environment-setup-*
-
-# Clean build
-cd ~/stm32mp257_flutter/demo_pages
-rm -rf build
-rm -rf elinux/flutter/ephemeral
-
-# Recreate eLinux scaffolding
-flutter-elinux create .
-
-# Target sysroot build
-flutter-elinux build elinux \
-  --target-arch=arm64 \
-  --target-sysroot="$SDKTARGETSYSROOT"
-
-
-cd /opt
+pushd /opt
 sudo git clone https://github.com/flutter/flutter.git -b stable
+pushd flutter
+git fetch --tags
+git checkout 3.27.1
+git describe --tags
+popd
 sudo chown -R $USER:$USER /opt/flutter
 export PATH=/opt/flutter/bin:$PATH
 flutter doctor
-
 dart pub global activate flutter_elinux
 export PATH="$HOME/.pub-cache/bin:$PATH"
+popd
+flutter --version
 
-cd /opt
+pushd /opt
 sudo git clone https://github.com/sony/flutter-elinux.git
 sudo chown -R $USER:$USER /opt/flutter-elinux
 export PATH=$PATH:/opt/flutter-elinux/bin
 
-flutter --version
-
 flutter-elinux doctor
 flutter-elinux devices
-
-cd /opt
-git clone https://github.com/flutter/flutter.git -b stable
-git fetch --tags
-git checkout 3.27.1
-bin/flutter --version
-export PATH=/opt/flutter/bin:$PATH
-
-cd /opt
-git clone https://github.com/sony/flutter-elinux.git
-cd /opt/flutter-elinux
-git fetch --tags
-git checkout 3.27.1
-export PATH=$PATH:/opt/flutter-elinux/bin
-
-flutter doctor
-flutter-elinux doctor
-flutter-elinux devices
+popd
+flutter-elinux --version
 
 mkdir -p "$OECORE_NATIVE_SYSROOT/bin"
 ln -sf "$(command -v aarch64-ostl-linux-gcc)"  "$OECORE_NATIVE_SYSROOT/bin/clang"
 ln -sf "$(command -v aarch64-ostl-linux-g++)" "$OECORE_NATIVE_SYSROOT/bin/clang++"
+
+mkdir $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/flutter_demo_1/
+cd $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources/flutter_demo_1/
+
+# Recreate eLinux scaffolding
+flutter-elinux create .
 
 vi lib/main.dart
 
 # Disable Performance Overlay
 showPerformanceOverlay: false,
 
-flutter-elinux create .
-
+# Clean build
 rm -rf build
 rm -rf elinux/flutter/ephemeral
 
-flutter-elinux build elinux   --target-arch=arm64   --target-sysroot="$SDKTARGETSYSROOT"   --target-toolchain="$OECORE_NATIVE_SYSROOT"
+# Target sysroot build
+flutter-elinux build elinux \
+  --target-arch=arm64 \
+  --target-sysroot="$SDKTARGETSYSROOT" \
+  --target-toolchain="$OECORE_NATIVE_SYSROOT"
 
-scp -r build/elinux/arm64/release/bundle root@192.168.7.1:/usr/local/elinux_sample6
+ssh root@$BUSBIP 'rm -rf /usr/local/flutter_demo_1'
 
-## Board
+scp -r build/elinux/arm64/release/bundle root@$BUSBIP:/usr/local/flutter_demo_1
 
-/usr/local/elinux_sample6/elinux_sample --bundle=$PWD --fullscreen
+### Board >
+
+cd /usr/local/flutter_demo_1/flutter_demo_1
+
+export LD_LIBRARY_PATH=$PWD/lib:$LD_LIBRARY_PATH
+
+/usr/local/flutter_demo_1/flutter_demo_1 --bundle=$PWD --fullscreen
+
+# Backup
+tar -czvf flutter_demo_1_$(date +%Y%m%d_%H%M%S).tar.gz \
+-C $STWSV/$STECOF/Developer-Package/stm32mp2-openstlinux-26.02.18/sources \
+flutter_demo_1
+tar -C /opt -czf flutter-full.tar.gz flutter
+tar -C /opt -czf flutter-elinux-full.tar.gz flutter-elinux
 ```
 
 `main.dart`
@@ -403,7 +423,6 @@ class EdtFlutterDemoApp extends StatelessWidget {
     return MaterialApp(
       title: 'EDT Flutter Demo 1',
       debugShowCheckedModeBanner: false,
-      showPerformanceOverlay: true,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
         useMaterial3: true,
@@ -431,6 +450,11 @@ class _DemoShellState extends State<DemoShell> with TickerProviderStateMixin {
     ComponentsPage(),
     ChartPage(),
     NavigationDemoPage(),
+    ThreeDTestPage(),
+    AINpuTestPage(),
+    StressTestPage(),
+    VideoPlayerDemoPage(),
+    ParkourGamePage(),
   ];
 
   @override
@@ -468,6 +492,16 @@ class _DemoShellState extends State<DemoShell> with TickerProviderStateMixin {
         return 'Live Chart';
       case 2:
         return 'Pages';
+      case 3:
+        return '3D Test';
+      case 4:
+        return 'AI NPU Test';
+      case 5:
+        return 'Stress Test';
+      case 6:
+        return 'Video Player';
+      case 7:
+        return 'Parkour Game';
       default:
         return 'Demo';
     }
@@ -543,6 +577,26 @@ class _DemoShellState extends State<DemoShell> with TickerProviderStateMixin {
           NavigationDestination(
             icon: Icon(Icons.swap_horiz),
             label: 'Pages',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.view_in_ar),
+            label: '3D Test',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.memory),
+            label: 'AI NPU',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bolt),
+            label: 'Stress',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.ondemand_video),
+            label: 'Video',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.sports_esports),
+            label: 'Game',
           ),
         ],
       ),
@@ -1277,8 +1331,1344 @@ class _PageViewDemoPageState extends State<PageViewDemoPage> {
     );
   }
 }
+
+class ThreeDTestPage extends StatefulWidget {
+  const ThreeDTestPage({super.key});
+
+  @override
+  State<ThreeDTestPage> createState() => _ThreeDTestPageState();
+}
+
+class _ThreeDTestPageState extends State<ThreeDTestPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: <Widget>[
+          const PageHeader(
+            subtitle:
+                '3D performance demo with a rotating textured cube and sphere.',
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (BuildContext context, Widget? child) {
+                    return CustomPaint(
+                      painter: ThreeDScenePainter(
+                        time: _controller.value,
+                      ),
+                      child: const SizedBox.expand(),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ThreeDScenePainter extends CustomPainter {
+  ThreeDScenePainter({required this.time});
+
+  final double time;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Offset.zero & size;
+    final Paint bg = Paint()
+      ..shader = const LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          Color(0xFF09111F),
+          Color(0xFF0F1B31),
+          Color(0xFF122747),
+        ],
+      ).createShader(rect);
+    canvas.drawRect(rect, bg);
+
+    final Paint gridPaint = Paint()
+      ..color = Colors.white.withOpacity(0.06)
+      ..strokeWidth = 1;
+    for (double x = 0; x < size.width; x += 32) {
+      canvas.drawLine(Offset(x, 0), Offset(x, size.height), gridPaint);
+    }
+    for (double y = 0; y < size.height; y += 32) {
+      canvas.drawLine(Offset(0, y), Offset(size.width, y), gridPaint);
+    }
+
+    final Offset cubeCenter = Offset(size.width * 0.28, size.height * 0.55);
+    final Offset sphereCenter = Offset(size.width * 0.72, size.height * 0.55);
+
+    _drawCube(canvas, cubeCenter, size.shortestSide * 0.17);
+    _drawSphere(canvas, sphereCenter, size.shortestSide * 0.16);
+
+    final textStyle = TextStyle(
+      color: Colors.white.withOpacity(0.85),
+      fontSize: 18,
+      fontWeight: FontWeight.w600,
+    );
+
+    final cubeTp = TextPainter(
+      text: TextSpan(text: 'Cube', style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    cubeTp.paint(canvas, Offset(cubeCenter.dx - cubeTp.width / 2, 20));
+
+    final sphereTp = TextPainter(
+      text: TextSpan(text: 'Sphere', style: textStyle),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    sphereTp.paint(canvas, Offset(sphereCenter.dx - sphereTp.width / 2, 20));
+  }
+
+  void _drawCube(Canvas canvas, Offset center, double scale) {
+    final double ax = time * math.pi * 2.0;
+    final double ay = time * math.pi * 2.7;
+    final double az = time * math.pi * 1.5;
+
+    final List<_Vec3> vertices = <_Vec3>[
+      _Vec3(-1, -1, -1),
+      _Vec3(1, -1, -1),
+      _Vec3(1, 1, -1),
+      _Vec3(-1, 1, -1),
+      _Vec3(-1, -1, 1),
+      _Vec3(1, -1, 1),
+      _Vec3(1, 1, 1),
+      _Vec3(-1, 1, 1),
+    ].map((v) => v.rotateX(ax).rotateY(ay).rotateZ(az)).toList();
+
+    final List<List<int>> faces = <List<int>>[
+      <int>[0, 1, 2, 3],
+      <int>[4, 5, 6, 7],
+      <int>[0, 1, 5, 4],
+      <int>[2, 3, 7, 6],
+      <int>[1, 2, 6, 5],
+      <int>[0, 3, 7, 4],
+    ];
+
+    final List<_FaceData> faceData = <_FaceData>[];
+
+    for (int i = 0; i < faces.length; i++) {
+      final face = faces[i];
+      final pts3 = face.map((idx) => vertices[idx]).toList();
+
+      final normal = (pts3[1] - pts3[0]).cross(pts3[2] - pts3[0]).normalize();
+      final light = _Vec3(0.4, -0.5, -1.0).normalize();
+      final brightness = (normal.dot(light) * -1).clamp(0.15, 1.0);
+
+      final avgZ = pts3.map((e) => e.z).reduce((a, b) => a + b) / pts3.length;
+
+      final pts2 = pts3.map((v) => _project(v, center, scale)).toList();
+
+      faceData.add(
+        _FaceData(
+          points: pts2,
+          depth: avgZ,
+          brightness: brightness,
+          kind: i,
+        ),
+      );
+    }
+
+    faceData.sort((a, b) => a.depth.compareTo(b.depth));
+
+    for (final face in faceData) {
+      final path = Path()..moveTo(face.points.first.dx, face.points.first.dy);
+      for (int i = 1; i < face.points.length; i++) {
+        path.lineTo(face.points[i].dx, face.points[i].dy);
+      }
+      path.close();
+
+      final Rect bounds = _boundsOf(face.points);
+
+      final base1 = Color.lerp(
+        const Color(0xFF1E88E5),
+        const Color(0xFFFFC107),
+        (face.kind % 6) / 5,
+      )!;
+      final base2 = Color.lerp(
+        const Color(0xFF26C6DA),
+        const Color(0xFFEF5350),
+        ((face.kind + 2) % 6) / 5,
+      )!;
+
+      final shader = LinearGradient(
+        begin: Alignment.topLeft,
+        end: Alignment.bottomRight,
+        colors: <Color>[
+          _shade(base1, face.brightness),
+          _shade(base2, face.brightness * 0.85),
+        ],
+      ).createShader(bounds);
+
+      canvas.save();
+      canvas.clipPath(path);
+
+      canvas.drawPath(
+        path,
+        Paint()..shader = shader,
+      );
+
+      _drawTexturePattern(
+        canvas,
+        bounds,
+        path,
+        face.brightness,
+        spacing: 12,
+      );
+
+      canvas.restore();
+
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1.5
+          ..color = Colors.white.withOpacity(0.35),
+      );
+    }
+  }
+
+  void _drawSphere(Canvas canvas, Offset center, double radius) {
+    final Rect sphereRect = Rect.fromCircle(center: center, radius: radius);
+
+    final Paint base = Paint()
+      ..shader = RadialGradient(
+        center: const Alignment(-0.25, -0.35),
+        radius: 1.0,
+        colors: <Color>[
+          const Color(0xFFFFF59D),
+          const Color(0xFFFFB300),
+          const Color(0xFF8D6E63),
+          const Color(0xFF3E2723),
+        ],
+        stops: const <double>[0.0, 0.2, 0.65, 1.0],
+      ).createShader(sphereRect);
+
+    canvas.drawCircle(center, radius, base);
+
+    canvas.save();
+    canvas.clipPath(Path()..addOval(sphereRect));
+
+    final int latLines = 11;
+    final int lonLines = 14;
+    final double ry = time * math.pi * 2.0;
+    final double rx = time * math.pi * 1.2;
+
+    for (int i = 0; i < latLines; i++) {
+      final double lat = -math.pi / 2 + i * math.pi / (latLines - 1);
+      final path = Path();
+      bool started = false;
+      for (int j = 0; j <= 100; j++) {
+        final double lon = -math.pi + j * 2 * math.pi / 100;
+        _Vec3 p = _spherePoint(lat, lon).rotateY(ry).rotateX(rx);
+        final Offset pt = Offset(
+          center.dx + p.x * radius,
+          center.dy + p.y * radius,
+        );
+        if (!started) {
+          path.moveTo(pt.dx, pt.dy);
+          started = true;
+        } else {
+          path.lineTo(pt.dx, pt.dy);
+        }
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Colors.white.withOpacity(0.18),
+      );
+    }
+
+    for (int i = 0; i < lonLines; i++) {
+      final double lon = -math.pi + i * 2 * math.pi / lonLines;
+      final path = Path();
+      bool started = false;
+      for (int j = 0; j <= 100; j++) {
+        final double lat = -math.pi / 2 + j * math.pi / 100;
+        _Vec3 p = _spherePoint(lat, lon).rotateY(ry).rotateX(rx);
+        final Offset pt = Offset(
+          center.dx + p.x * radius,
+          center.dy + p.y * radius,
+        );
+        if (!started) {
+          path.moveTo(pt.dx, pt.dy);
+          started = true;
+        } else {
+          path.lineTo(pt.dx, pt.dy);
+        }
+      }
+      canvas.drawPath(
+        path,
+        Paint()
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 1
+          ..color = Colors.cyanAccent.withOpacity(0.16),
+      );
+    }
+
+    for (int y = 0; y < (radius * 2).toInt(); y += 10) {
+      final double t = y / (radius * 2);
+      final double yy = center.dy - radius + y;
+      final double alpha =
+          0.04 + 0.08 * math.sin((t + time) * math.pi * 6).abs();
+      canvas.drawLine(
+        Offset(center.dx - radius, yy),
+        Offset(center.dx + radius, yy),
+        Paint()
+          ..color = Colors.white.withOpacity(alpha)
+          ..strokeWidth = 2,
+      );
+    }
+
+    canvas.restore();
+
+    canvas.drawCircle(
+      center,
+      radius,
+      Paint()
+        ..style = PaintingStyle.stroke
+        ..strokeWidth = 1.5
+        ..color = Colors.white.withOpacity(0.4),
+    );
+
+    canvas.drawCircle(
+      Offset(center.dx - radius * 0.28, center.dy - radius * 0.35),
+      radius * 0.16,
+      Paint()
+        ..color = Colors.white.withOpacity(0.42)
+        ..maskFilter = const MaskFilter.blur(BlurStyle.normal, 12),
+    );
+  }
+
+  _Vec3 _spherePoint(double lat, double lon) {
+    final double x = math.cos(lat) * math.cos(lon);
+    final double y = math.sin(lat);
+    final double z = math.cos(lat) * math.sin(lon);
+    return _Vec3(x, y, z);
+  }
+
+  Offset _project(_Vec3 v, Offset center, double scale) {
+    const double distance = 4.0;
+    final double perspective = distance / (distance - v.z);
+    return Offset(
+      center.dx + v.x * scale * perspective,
+      center.dy + v.y * scale * perspective,
+    );
+  }
+
+  void _drawTexturePattern(
+    Canvas canvas,
+    Rect bounds,
+    Path clip,
+    double brightness, {
+    required double spacing,
+  }) {
+    final Paint p1 = Paint()
+      ..color = Colors.white.withOpacity(0.05 + 0.10 * brightness)
+      ..strokeWidth = 1;
+    final Paint p2 = Paint()
+      ..color = Colors.black.withOpacity(0.06)
+      ..strokeWidth = 1;
+
+    for (double x = bounds.left - bounds.height;
+        x < bounds.right + bounds.height;
+        x += spacing) {
+      canvas.drawLine(
+        Offset(x, bounds.top),
+        Offset(x + bounds.height, bounds.bottom),
+        p1,
+      );
+    }
+
+    for (double x = bounds.left - bounds.height;
+        x < bounds.right + bounds.height;
+        x += spacing * 1.8) {
+      canvas.drawLine(
+        Offset(x, bounds.bottom),
+        Offset(x + bounds.height, bounds.top),
+        p2,
+      );
+    }
+  }
+
+  Rect _boundsOf(List<Offset> pts) {
+    double left = pts.first.dx;
+    double top = pts.first.dy;
+    double right = pts.first.dx;
+    double bottom = pts.first.dy;
+    for (final p in pts) {
+      left = math.min(left, p.dx);
+      top = math.min(top, p.dy);
+      right = math.max(right, p.dx);
+      bottom = math.max(bottom, p.dy);
+    }
+    return Rect.fromLTRB(left, top, right, bottom);
+  }
+
+  Color _shade(Color color, double factor) {
+    return Color.fromARGB(
+      255,
+      (color.red * factor).clamp(0, 255).toInt(),
+      (color.green * factor).clamp(0, 255).toInt(),
+      (color.blue * factor).clamp(0, 255).toInt(),
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant ThreeDScenePainter oldDelegate) {
+    return oldDelegate.time != time;
+  }
+}
+
+class _Vec3 {
+  const _Vec3(this.x, this.y, this.z);
+
+  final double x;
+  final double y;
+  final double z;
+
+  _Vec3 operator -(_Vec3 other) => _Vec3(x - other.x, y - other.y, z - other.z);
+
+  _Vec3 rotateX(double a) {
+    final c = math.cos(a);
+    final s = math.sin(a);
+    return _Vec3(x, y * c - z * s, y * s + z * c);
+  }
+
+  _Vec3 rotateY(double a) {
+    final c = math.cos(a);
+    final s = math.sin(a);
+    return _Vec3(x * c + z * s, y, -x * s + z * c);
+  }
+
+  _Vec3 rotateZ(double a) {
+    final c = math.cos(a);
+    final s = math.sin(a);
+    return _Vec3(x * c - y * s, x * s + y * c, z);
+  }
+
+  _Vec3 cross(_Vec3 o) {
+    return _Vec3(
+      y * o.z - z * o.y,
+      z * o.x - x * o.z,
+      x * o.y - y * o.x,
+    );
+  }
+
+  double dot(_Vec3 o) => x * o.x + y * o.y + z * o.z;
+
+  double get length => math.sqrt(x * x + y * y + z * z);
+
+  _Vec3 normalize() {
+    final len = length;
+    if (len == 0) return this;
+    return _Vec3(x / len, y / len, z / len);
+  }
+}
+
+class _FaceData {
+  _FaceData({
+    required this.points,
+    required this.depth,
+    required this.brightness,
+    required this.kind,
+  });
+
+  final List<Offset> points;
+  final double depth;
+  final double brightness;
+  final int kind;
+}
+
+class AINpuTestPage extends StatefulWidget {
+  const AINpuTestPage({super.key});
+
+  @override
+  State<AINpuTestPage> createState() => _AINpuTestPageState();
+}
+
+class _AINpuTestPageState extends State<AINpuTestPage> {
+  Timer? _timer;
+  final math.Random _random = math.Random();
+
+  double _latencyMs = 12.5;
+  double _throughput = 24.0;
+  double _utilization = 68.0;
+  int _frameId = 0;
+  bool _running = true;
+  String _model = 'MobileNetV2';
+  String _status = 'Running';
+
+  final List<String> _models = const <String>[
+    'MobileNetV2',
+    'YOLO-Nano',
+    'ResNet18',
+    'PoseLite',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _timer = Timer.periodic(const Duration(milliseconds: 180), (_) {
+      if (!_running) return;
+      setState(() {
+        _frameId++;
+        _latencyMs = 8 + _random.nextDouble() * 18;
+        _throughput = 18 + _random.nextDouble() * 20;
+        _utilization = 45 + _random.nextDouble() * 50;
+        _status = _utilization > 90 ? 'High Load' : 'Running';
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: <Widget>[
+          const PageHeader(
+            subtitle: 'Simulated AI inference pipeline and NPU workload view.',
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              children: <Widget>[
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: <Widget>[
+                        DropdownButtonFormField<String>(
+                          value: _model,
+                          decoration: const InputDecoration(
+                            labelText: 'AI Model',
+                            border: OutlineInputBorder(),
+                          ),
+                          items: _models
+                              .map((String m) => DropdownMenuItem<String>(
+                                    value: m,
+                                    child: Text(m),
+                                  ))
+                              .toList(),
+                          onChanged: (String? value) {
+                            if (value == null) return;
+                            setState(() => _model = value);
+                          },
+                        ),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: <Widget>[
+                            Expanded(
+                              child: ElevatedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _running = true;
+                                    _status = 'Running';
+                                  });
+                                },
+                                child: const Text('Start Inference'),
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: OutlinedButton(
+                                onPressed: () {
+                                  setState(() {
+                                    _running = false;
+                                    _status = 'Paused';
+                                  });
+                                },
+                                child: const Text('Pause'),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _npuStatCard(
+                        'Latency',
+                        '${_latencyMs.toStringAsFixed(1)} ms',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _npuStatCard(
+                        'Throughput',
+                        '${_throughput.toStringAsFixed(1)} FPS',
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Row(
+                  children: <Widget>[
+                    Expanded(
+                      child: _npuStatCard(
+                        'Utilization',
+                        '${_utilization.toStringAsFixed(0)} %',
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: _npuStatCard('Frame ID', '$_frameId'),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Text(
+                          'Pipeline Status',
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                        const SizedBox(height: 16),
+                        _pipelineBar('Input Capture', true),
+                        _pipelineBar('Preprocess', _running),
+                        _pipelineBar('NPU Inference', _running),
+                        _pipelineBar('Postprocess', _running),
+                        _pipelineBar('Overlay Render', _running),
+                        const SizedBox(height: 12),
+                        Text('Status: $_status'),
+                        Text('Model: $_model'),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _npuStatCard(String label, String value) {
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 18),
+        child: Column(
+          children: <Widget>[
+            Text(label, style: const TextStyle(fontWeight: FontWeight.bold)),
+            const SizedBox(height: 8),
+            Text(
+              value,
+              style: const TextStyle(fontSize: 22),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _pipelineBar(String label, bool active) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10),
+      child: Row(
+        children: <Widget>[
+          SizedBox(
+            width: 120,
+            child: Text(label),
+          ),
+          Expanded(
+            child: LinearProgressIndicator(
+              value: active ? null : 0,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StressTestPage extends StatefulWidget {
+  const StressTestPage({super.key});
+
+  @override
+  State<StressTestPage> createState() => _StressTestPageState();
+}
+
+class _StressTestPageState extends State<StressTestPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  int _load = 120;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _setLoad(int value) {
+    setState(() => _load = value);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: <Widget>[
+          const PageHeader(
+            subtitle: 'High-frequency animation and repaint stress test.',
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Wrap(
+              spacing: 10,
+              runSpacing: 10,
+              children: <Widget>[
+                ElevatedButton(
+                  onPressed: () => _setLoad(80),
+                  child: const Text('Low'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _setLoad(160),
+                  child: const Text('Medium'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _setLoad(260),
+                  child: const Text('High'),
+                ),
+                ElevatedButton(
+                  onPressed: () => _setLoad(420),
+                  child: const Text('Extreme'),
+                ),
+              ],
+            ),
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: AnimatedBuilder(
+                  animation: _controller,
+                  builder: (BuildContext context, Widget? child) {
+                    return CustomPaint(
+                      painter: StressPainter2(
+                        time: _controller.value,
+                        count: _load,
+                      ),
+                      child: const SizedBox.expand(),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class StressPainter2 extends CustomPainter {
+  StressPainter2({
+    required this.time,
+    required this.count,
+  });
+
+  final double time;
+  final int count;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: <Color>[
+            Color(0xFF111827),
+            Color(0xFF1F2937),
+            Color(0xFF0F172A),
+          ],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ).createShader(Offset.zero & size),
+    );
+
+    for (int i = 0; i < count; i++) {
+      final double t = i / count;
+      final double x =
+          (size.width *
+              (0.5 + 0.42 * math.sin((time * 2 + t) * math.pi * 2)));
+      final double y =
+          (size.height *
+              (0.5 +
+                  0.42 * math.cos((time * 1.7 + t * 1.3) * math.pi * 2)));
+      final double r =
+          4 + 10 * (0.5 + 0.5 * math.sin((time + t) * math.pi * 8));
+
+      final Paint p = Paint()
+        ..color = HSVColor.fromAHSV(
+          0.8,
+          (t * 360 + time * 360) % 360,
+          0.8,
+          1.0,
+        ).toColor();
+
+      canvas.drawCircle(Offset(x, y), r, p);
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant StressPainter2 oldDelegate) {
+    return oldDelegate.time != time || oldDelegate.count != count;
+  }
+}
+
+class VideoPlayerDemoPage extends StatefulWidget {
+  const VideoPlayerDemoPage({super.key});
+
+  @override
+  State<VideoPlayerDemoPage> createState() => _VideoPlayerDemoPageState();
+}
+
+class _VideoPlayerDemoPageState extends State<VideoPlayerDemoPage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  bool _playing = true;
+  double _progress = 0.0;
+  Timer? _timer;
+  String _resolution = '1920x1080';
+  bool _loop = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 12),
+    )..repeat();
+
+    _timer = Timer.periodic(const Duration(milliseconds: 120), (_) {
+      if (!_playing) return;
+      setState(() {
+        _progress += 0.008;
+        if (_progress >= 1.0) {
+          _progress = _loop ? 0.0 : 1.0;
+          if (!_loop) _playing = false;
+        }
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final String currentTime = _formatTime((_progress * 120).toInt());
+    const String totalTime = '02:00';
+
+    return SafeArea(
+      child: Column(
+        children: <Widget>[
+          const PageHeader(
+            subtitle: 'Video player UI demo with simulated playback rendering.',
+          ),
+          Expanded(
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              children: <Widget>[
+                Card(
+                  clipBehavior: Clip.antiAlias,
+                  child: AspectRatio(
+                    aspectRatio: 16 / 9,
+                    child: AnimatedBuilder(
+                      animation: _controller,
+                      builder: (BuildContext context, Widget? child) {
+                        return CustomPaint(
+                          painter: FakeVideoPainter(
+                            time: _controller.value,
+                            playing: _playing,
+                          ),
+                          child: Stack(
+                            children: <Widget>[
+                              Positioned(
+                                left: 16,
+                                top: 16,
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 10,
+                                    vertical: 6,
+                                  ),
+                                  color: Colors.black54,
+                                  child: const Text(
+                                    'EDT Flutter Demo 1',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                              if (!_playing)
+                                const Center(
+                                  child: Icon(
+                                    Icons.play_circle_fill,
+                                    size: 90,
+                                    color: Colors.white70,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      children: <Widget>[
+                        Row(
+                          children: <Widget>[
+                            Text(currentTime),
+                            Expanded(
+                              child: Slider(
+                                value: _progress,
+                                onChanged: (double value) {
+                                  setState(() => _progress = value);
+                                },
+                              ),
+                            ),
+                            const Text(totalTime),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 12,
+                          runSpacing: 12,
+                          children: <Widget>[
+                            ElevatedButton.icon(
+                              onPressed: () {
+                                setState(() => _playing = !_playing);
+                              },
+                              icon: Icon(
+                                _playing ? Icons.pause : Icons.play_arrow,
+                              ),
+                              label: Text(_playing ? 'Pause' : 'Play'),
+                            ),
+                            OutlinedButton(
+                              onPressed: () {
+                                setState(() => _progress = 0.0);
+                              },
+                              child: const Text('Stop'),
+                            ),
+                            DropdownButton<String>(
+                              value: _resolution,
+                              items: const <DropdownMenuItem<String>>[
+                                DropdownMenuItem(
+                                  value: '1280x720',
+                                  child: Text('1280x720'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '1920x1080',
+                                  child: Text('1920x1080'),
+                                ),
+                                DropdownMenuItem(
+                                  value: '3840x2160',
+                                  child: Text('3840x2160'),
+                                ),
+                              ],
+                              onChanged: (String? value) {
+                                if (value == null) return;
+                                setState(() => _resolution = value);
+                              },
+                            ),
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const Text('Loop'),
+                                Checkbox(
+                                  value: _loop,
+                                  onChanged: (bool? value) {
+                                    setState(() => _loop = value ?? true);
+                                  },
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatTime(int seconds) {
+    final int mm = seconds ~/ 60;
+    final int ss = seconds % 60;
+    return '${mm.toString().padLeft(2, '0')}:${ss.toString().padLeft(2, '0')}';
+  }
+}
+
+class FakeVideoPainter extends CustomPainter {
+  FakeVideoPainter({
+    required this.time,
+    required this.playing,
+  });
+
+  final double time;
+  final bool playing;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          colors: <Color>[
+            Color(0xFF0B132B),
+            Color(0xFF1C2541),
+            Color(0xFF3A506B),
+          ],
+        ).createShader(rect),
+    );
+
+    final double t = playing ? time : 0.25;
+
+    for (int i = 0; i < 12; i++) {
+      final double dx = size.width * (i / 12.0);
+      final double h = size.height *
+          (0.2 + 0.6 * (0.5 + 0.5 * math.sin(t * math.pi * 2 + i)));
+      canvas.drawRRect(
+        RRect.fromRectAndRadius(
+          Rect.fromLTWH(dx + 8, size.height - h, size.width / 16, h),
+          const Radius.circular(8),
+        ),
+        Paint()
+          ..color = Colors.primaries[i % Colors.primaries.length]
+              .withOpacity(0.8),
+      );
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant FakeVideoPainter oldDelegate) {
+    return oldDelegate.time != time || oldDelegate.playing != playing;
+  }
+}
+
+class ParkourGamePage extends StatefulWidget {
+  const ParkourGamePage({super.key});
+
+  @override
+  State<ParkourGamePage> createState() => _ParkourGamePageState();
+}
+
+class _ParkourGamePageState extends State<ParkourGamePage>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _controller;
+  Timer? _timer;
+
+  double _playerY = 0;
+  double _velocityY = 0;
+  bool _isJumping = false;
+  double _obstacleX = 1.2;
+  int _score = 0;
+  bool _gameOver = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 16),
+    )..addListener(_update);
+    _controller.repeat();
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_gameOver) {
+        setState(() => _score++);
+      }
+    });
+  }
+
+  void _update() {
+    if (_gameOver) return;
+
+    setState(() {
+      _obstacleX -= 0.02;
+      if (_obstacleX < -0.2) {
+        _obstacleX = 1.2;
+      }
+
+      if (_isJumping) {
+        _playerY += _velocityY;
+        _velocityY -= 0.012;
+        if (_playerY <= 0) {
+          _playerY = 0;
+          _velocityY = 0;
+          _isJumping = false;
+        }
+      }
+
+      final bool hitX = _obstacleX < 0.22 && _obstacleX > 0.05;
+      final bool hitY = _playerY < 0.16;
+      if (hitX && hitY) {
+        _gameOver = true;
+      }
+    });
+  }
+
+  void _jump() {
+    if (_isJumping || _gameOver) return;
+    setState(() {
+      _isJumping = true;
+      _velocityY = 0.08;
+    });
+  }
+
+  void _restart() {
+    setState(() {
+      _playerY = 0;
+      _velocityY = 0;
+      _isJumping = false;
+      _obstacleX = 1.2;
+      _score = 0;
+      _gameOver = false;
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      child: Column(
+        children: <Widget>[
+          const PageHeader(
+            subtitle: 'Simple parkour game demo for touch and animation testing.',
+          ),
+          Expanded(
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 96),
+              child: Card(
+                clipBehavior: Clip.antiAlias,
+                child: GestureDetector(
+                  onTap: _jump,
+                  child: Stack(
+                    children: <Widget>[
+                      Positioned.fill(
+                        child: CustomPaint(
+                          painter: ParkourPainter(
+                            playerY: _playerY,
+                            obstacleX: _obstacleX,
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        left: 16,
+                        top: 16,
+                        child: Container(
+                          padding: const EdgeInsets.all(10),
+                          color: Colors.black54,
+                          child: Text(
+                            'EDT Flutter Demo 1\nScore: $_score',
+                            style: const TextStyle(color: Colors.white),
+                          ),
+                        ),
+                      ),
+                      Positioned(
+                        right: 16,
+                        bottom: 16,
+                        child: Wrap(
+                          spacing: 12,
+                          children: <Widget>[
+                            ElevatedButton(
+                              onPressed: _jump,
+                              child: const Text('Jump'),
+                            ),
+                            OutlinedButton(
+                              onPressed: _restart,
+                              child: const Text('Restart'),
+                            ),
+                          ],
+                        ),
+                      ),
+                      if (_gameOver)
+                        Center(
+                          child: Container(
+                            padding: const EdgeInsets.all(20),
+                            color: Colors.black87,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: <Widget>[
+                                const Text(
+                                  'Game Over',
+                                  style: TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 28,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 12),
+                                Text(
+                                  'Final Score: $_score',
+                                  style: const TextStyle(
+                                    color: Colors.white,
+                                    fontSize: 20,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class ParkourPainter extends CustomPainter {
+  ParkourPainter({
+    required this.playerY,
+    required this.obstacleX,
+  });
+
+  final double playerY;
+  final double obstacleX;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final Rect rect = Offset.zero & size;
+    canvas.drawRect(
+      rect,
+      Paint()
+        ..shader = const LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: <Color>[
+            Color(0xFF87CEEB),
+            Color(0xFFE0F7FA),
+          ],
+        ).createShader(rect),
+    );
+
+    final double groundY = size.height * 0.82;
+    canvas.drawRect(
+      Rect.fromLTWH(0, groundY, size.width, size.height - groundY),
+      Paint()..color = const Color(0xFF4CAF50),
+    );
+
+    final double playerX = size.width * 0.14;
+    final double playerSize = size.height * 0.12;
+    final double playerBottom = groundY - playerY * size.height;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          playerX,
+          playerBottom - playerSize,
+          playerSize,
+          playerSize,
+        ),
+        const Radius.circular(10),
+      ),
+      Paint()..color = Colors.deepPurple,
+    );
+
+    final double obstacleWidth = size.width * 0.06;
+    final double obstacleHeight = size.height * 0.14;
+    final double ox = obstacleX * size.width;
+
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        Rect.fromLTWH(
+          ox,
+          groundY - obstacleHeight,
+          obstacleWidth,
+          obstacleHeight,
+        ),
+        const Radius.circular(8),
+      ),
+      Paint()..color = Colors.redAccent,
+    );
+  }
+
+  @override
+  bool shouldRepaint(covariant ParkourPainter oldDelegate) {
+    return oldDelegate.playerY != playerY || oldDelegate.obstacleX != obstacleX;
+  }
+}
 ```
 
 ## Distribution Package
 
-Share
+Shared Document
