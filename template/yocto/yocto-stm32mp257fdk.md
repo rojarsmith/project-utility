@@ -2848,6 +2848,9 @@ DISTRO=openstlinux-weston MACHINE=stm32mp2 source layers/meta-st/scripts/envsetu
 
 sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
+bitbake -c fetch m0projects-stm32mp2
+bitbake -c fetch libopencsd
+
 bitbake st-image-weston
 
 # The build-<distro>-<machine>/tmp-glibc/deploy/images/<machine> directory receives complete file system images.
@@ -2898,3 +2901,6 @@ systemctl restart weston-graphical-session
 dmesg
 ```
 
+## Android
+
+Only for STM32MP257x-EV1.
