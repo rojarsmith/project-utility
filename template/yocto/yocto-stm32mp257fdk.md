@@ -91,8 +91,10 @@ ip addr show usb0 # USB Gadget Ethernet
 sudo apt update
 date -s "2026-04-02 07:39:00"
 
-# Check display
-modetest -c
+sudo apt install openssh
+vi /etc/ssh/sshd_config
+# PermitRootLogin prohibit-password => PermitRootLogin yes
+# PermitEmptyPasswords no => PermitEmptyPasswords yes
 
 ### PC >
 
@@ -2817,3 +2819,52 @@ minicom -D /dev/ttyACM1
 ## Distribution Package
 
 Shared Document
+
+```bash
+mkdir $STWSV/$STECOF/Distribution-Package
+cd $STWSV/$STECOF/Distribution-Package
+
+repo init -u https://github.com/STMicroelectronics/oe-manifest.git -b refs/tags/openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18
+
+repo sync
+
+# OR
+
+tar -xvf oe-manifest-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz
+
+cd oe-manifest-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18
+
+DISTRO=openstlinux-weston MACHINE=stm32mp2 source layers/meta-st/scripts/envsetup.sh
+
+
+```
+
+### Display
+
+DFROBOT DFR0506 7-inch HDMI Capacitive Touchscreen Display not support.
+
+Waveshare 5.5inch HDMI AMOLED not support.
+
+```bash
+### Board >
+
+# Check display
+modetest -c
+modetest -M stm
+
+vi /etc/xdg/weston/weston.ini
+vi /boot/mmc0_extlinux/extlinux.conf
+
+systemctl restart weston-graphical-session
+
+systemctl stop weston-graphical-session
+modetest -M stm -s 32@41:1920x1080@XR24
+systemctl start weston-graphical-session
+
+# Retrieve all the video modes supported by the HDMI monitor
+dmesg -C
+echo 4 > /sys/module/drm/parameters/debug
+systemctl restart weston-graphical-session
+dmesg
+```
+
