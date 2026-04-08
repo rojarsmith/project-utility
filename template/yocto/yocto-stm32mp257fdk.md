@@ -2824,26 +2824,56 @@ Shared Document
 mkdir $STWSV/$STECOF/Distribution-Package
 cd $STWSV/$STECOF/Distribution-Package
 
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+
 repo init -u https://github.com/STMicroelectronics/oe-manifest.git -b refs/tags/openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18
 
 repo sync
 
 # OR
 
-tar -xvf oe-manifest-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz
+cd $STWSV/$STECOF
+mkdir -p Distribution-Package
+tar -xvf oe-manifest-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18.tar.gz -C Distribution-Package --strip-components=1
+cd Distribution-Package
+git init
+git add .
+git commit -m "Initial manifest"
+repo init -u . -b master
+repo sync
 
-cd oe-manifest-openstlinux-6.6-yocto-scarthgap-mpu-v26.02.18
-
+cd $STWSV/$STECOF/Distribution-Package
 DISTRO=openstlinux-weston MACHINE=stm32mp2 source layers/meta-st/scripts/envsetup.sh
 
+sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
 
+bitbake st-image-weston
+
+# The build-<distro>-<machine>/tmp-glibc/deploy/images/<machine> directory receives complete file system images.
+
+#### Generating your own Starter and Developer Packages
+
+DISTRO=<distro> MACHINE=<machine> source layers/meta-st/scripts/envsetup.sh
+
+# Modify the build-<distro>-<machine>/conf/local.conf file to enable archiver for recipes that are configured to use it; the objective is to generate the "source code" software packages for the Developer Package (Linux kernel, gcnano-driver, U-Boot, TF-A and OP-TEE OS)
+ST_ARCHIVER_ENABLE = "1"
+
+bitbake <image> --runall=deploy_archives
+
+# The image (binaries) for the Starter Package are available in the build-<DISTRO>-<MACHINE>/tmp-glibc/deploy/images/<machine> directory
+# The "source code" for the Developer Package software packages (Linux kernel, gcnano-driver, U-Boot, TF-A and OP-TEE OS) are available in the build-<distro>-<machine>/tmp-glibc/deploy/sources/arm-ostl-linux-gnueabi directory
 ```
 
 ### Display
 
 DFROBOT DFR0506 7-inch HDMI Capacitive Touchscreen Display not support.
 
+Default driver not support 1024x600@43Hz.
+
 Waveshare 5.5inch HDMI AMOLED not support.
+
+EDID report wrong message like 1280x720@100Hz, default driver not support user mode.
 
 ```bash
 ### Board >
