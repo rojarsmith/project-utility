@@ -1,5 +1,7 @@
 # Yocto - STM32MP257F-DK
 
+A 500GB hard drive, 24GB real ram should be provided for Android.
+
 The official OpenSTLinux defaults support PCAP Touch IC with common USB interfaces, using Type-A.
 
 ## Parameter
@@ -123,6 +125,8 @@ export REPO=$(mktemp /tmp/repo.XXXXXXXXX)
 curl -o ${REPO} https://storage.googleapis.com/git-repo-downloads/repo
 gpg --recv-keys 8BB9AD793E8E6153AF0F9A4416530D5E920F5C65
 curl -s https://storage.googleapis.com/git-repo-downloads/repo.asc | gpg --verify - ${REPO} && install -m 755 ${REPO} ~/bin/repo
+# Repo not found
+printf '\nexport PATH="~/bin:$PATH"\n' >> ~/.bashrc && source ~/.bashrc
 
 echo 'options mmc_block perdev_minors=16' > /tmp/mmc_block.conf
 sudo mv /tmp/mmc_block.conf /etc/modprobe.d/mmc_block.conf
@@ -2903,4 +2907,84 @@ dmesg
 
 ## Android
 
-Only for STM32MP257x-EV1.
+Starter Package only for STM32MP257x-EV1.
+
+Use Distribution Package for Android.
+
+```bash
+# Expand Disk with EXT4
+# Delete all snapshots.
+# Expand size with UI
+lsblk
+sudo fdisk -l
+sudo apt install -y cloud-guest-utils
+sudo growpart /dev/sda 2
+sudo resize2fs /dev/sda2
+df -h /
+lsblk -o NAME,SIZE,FSTYPE,TYPE,MOUNTPOINT
+
+# For Ubuntu 24.04
+sudo tee /etc/apt/sources.list.d/jammy-security-ncurses.list >/dev/null <<'EOF'
+deb http://security.ubuntu.com/ubuntu jammy-security main universe
+EOF
+
+sudo apt update
+sudo apt install -y libtinfo5 libncurses5
+
+ldconfig -p | grep -E 'libncurses.so.5|libtinfo.so.5'
+
+cd $STWSV
+mkdir Developer-Package-Android
+cd Developer-Package-Android
+
+git config --global user.email "you@example.com"
+git config --global user.name "Your Name"
+
+repo init -u https://github.com/STMicroelectronics/android-manifest  -b refs/tags/st-android-13.0.0-2025-11-21 -m stm32mp2droid.xml
+
+# Try downloading in stages.
+repo sync frameworks/base
+# Long time, use SSH to log into the console to close the desktop and log out.
+repo sync
+
+source ./build/envsetup.sh
+hmm
+lunch aosp_dk-eng
+stm32mp2setup
+make -j $(nproc)
+
+dmesg -T | grep -i -E 'killed process|out of memory|oom'
+# Out of memory: Killed process xxxx (java)
+# Killed process xxxx (ninja)
+make -j 4
+
+## "android.hardware.graphics.composer3-service.stm32mpu" depends on undefined module "hwcomposer3.drm_defaults"
+cd $STWSV/Developer-Package-Android
+find . -path "*drm_hwcomposer*" -type d
+pushd external/drm_hwcomposer
+git apply --check $STWSV/Developer-Package-Android/device/stm/stm32mp2/patch/android/drm_hwcomposer/0001-implement-the-AIDL-composer3-HAL-version.patch
+git apply $STWSV/Developer-Package-Android/device/stm/stm32mp2/patch/android/drm_hwcomposer/0001-implement-the-AIDL-composer3-HAL-version.patch
+ls hwc3
+grep -R -n 'name: "hwcomposer3.drm_defaults"' .
+popd
+rm -rf out/soong
+rm -f
+source build/envsetup.sh
+lunch aosp_dk-eng
+stm32mp2setup
+make -j4
+
+## ERROR: files are incompatible: Runtime info and framework compatibility matrix are incompatible: No kernel entry found for kernel version 6.1 at kernel FCM version 7.
+grep -R -n "PRODUCT_OTA_ENFORCE_VINTF_KERNEL_REQUIREMENTS" device/stm vendor/stm build
+grep -R -n "5.10\|5.15\|6.1" device/stm vendor/stm system
+cat out/target/product/dk/obj/PACKAGING/check_vintf_all_intermediates/kernel_version.txt
+# 6.1.78-00033-g3b05c8f8a0eb
+# For DK
+vi device/stm/stm32mp2/dk/device.mk
+vi device/stm/stm32mp2/eval/device.mk
+source build/envsetup.sh
+lunch aosp_dk-eng
+stm32mp2setup
+make -j4
+```
+
