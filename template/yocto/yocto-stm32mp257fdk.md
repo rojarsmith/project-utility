@@ -2958,6 +2958,12 @@ dmesg -T | grep -i -E 'killed process|out of memory|oom'
 # Killed process xxxx (ninja)
 make -j 4
 
+## ERROR: Not possible to load https://github.com/OP-TEE/optee_client/archive/3.19.0.tar.gz
+vi device/stm/scripts/load_tee
+447:          \wget ${archive_path}/archive/${tee_version}.tar.gz >/dev/null 2>&1
+# to
+447:          \curl -L ${archive_path}/archive/${tee_version}.tar.gz >/dev/null 2>&1
+
 ## "android.hardware.graphics.composer3-service.stm32mpu" depends on undefined module "hwcomposer3.drm_defaults"
 cd $STWSV/Developer-Package-Android
 find . -path "*drm_hwcomposer*" -type d
