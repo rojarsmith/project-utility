@@ -2905,11 +2905,28 @@ systemctl restart weston-graphical-session
 dmesg
 ```
 
-## Android
+## OpenSTDroid Starter Package
 
-Starter Package only for STM32MP257x-EV1.
+Base on ecosystem release v5.1.
 
-Use Distribution Package for Android.
+```bash
+mkdir $STWSV/Android-Starter-Package
+cd $STWSV/Android-Starter-Package
+tar xvf st-android-13.0.0-2025-11-21-stm32mp257f-dk-emmc-starter.tar.gz
+cd st-android-13.0.0-2025-11-21-stm32mp257f-dk-emmc-starter
+STM32_Programmer_CLI -l usb
+# Cost > 120min
+STM32_Programmer_CLI -c port=usb1 -w flashlayout/FlashLayout_emmc_optee.tsv
+
+sudo apt install -y adb
+sudo adb kill-server
+sudo adb start-server
+sudo adb devices
+sudo adb push "xxx.apk" /sdcard/Download/
+# Install App
+```
+
+## OpenSTDroid Distribution Package
 
 ```bash
 # Expand Disk with EXT4
@@ -2992,5 +3009,36 @@ source build/envsetup.sh
 lunch aosp_dk-eng
 stm32mp2setup
 make -j4
+
+pushd /etc/udev/rules.d/
+sudo vi 51-android.rules
+sudo chmod a+r /etc/udev/rules.d/51-android.rules
+popd
+
+# The STM32CubeProgrammer tool is used to flash the first stages of the images to the board. Then fastboot is used to flash the remaining images.
+
+source ./build/envsetup.sh
+lunch aosp_dk-eng
+# Change dip on the board to download DFU
+flash-device
+
+# Press the reset button and keep the USER 2 button (refer to LEDs and buttons on STM32 MPU boards) pressed until the board enters fastboot. The device provisioning continues until the required images have been loaded.
+# This operation takes several minutes.
+
+pushd out/target/product/dk
+```
+
+### Update an Android distribution
+
+```bash
+adb root
+adb remount
+adb reboot
+
+adb root
+adb remount
+adb sync
+
+adb reboot
 ```
 
