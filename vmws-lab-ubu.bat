@@ -119,18 +119,15 @@ goto wait_guest
 :guest_ready
 echo [INFO] guest is ready
 
-@REM call :waitForSsh "vmubu2404sv" "!templateLoginUser!" "!templateLoginPass!" 180
-@REM if errorlevel 1 (
-@REM     echo [ERROR] Guest OS not ready.
-@REM     exit /b 1
-@REM )
-
 REM ---------- Modfy ----------
 echo [STEP] Start Modfy...
 "!SSHPASS!" -p "!templateLoginPass!" !SSH! -o StrictHostKeyChecking=no !templateLoginUser!@vmubu2404sv ^
 "echo '!templateLoginPass!' ^| sudo -S hostnamectl set-hostname '!vmName!'"
 "!SSHPASS!" -p "!templateLoginPass!" !SSH! -o StrictHostKeyChecking=no !templateLoginUser!@vmubu2404sv ^
 "echo '!templateLoginPass!' ^| sudo -S systemctl restart avahi-daemon"
+REM Extend storage
+"!SSHPASS!" -p "!templateLoginPass!" !SSH! -o StrictHostKeyChecking=no !templateLoginUser!@vmubu2404sv ^
+"echo '!templateLoginPass!' ^| sudo -S lvextend -l +100%%FREE -r /dev/ubuntu-vg/ubuntu-lv"
 
 
 REM ============================================================
