@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>台北車站 → 台北101 3D 導航概念 DEMO</title>
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.css" />
+  <script src="https://unpkg.com/maplibre-gl@5.23.0/dist/maplibre-gl.js"></script>
+  <style>
+    :root {
+      --panel-bg: rgba(10, 14, 24, 0.78);
+      --panel-border: rgba(255, 255, 255, 0.12);
+      --text: #f3f6fb;
+      --muted: #a8b3c7;
+      --accent: #53b3ff;
+      --accent-2: #7fffd4;
+      --danger: #ff7b7b;
+    }
+
+    html, body {
+      margin: 0;
+      height: 100%;
+      overflow: hidden;
+      background: #0b1020;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+      color: var(--text);
+    }
+
+    #map {
+      position: absolute;
+      inset: 0;
+    }
+
+    .hud {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      z-index: 10;
+      width: min(360px, calc(100vw - 32px));
+      padding: 14px 14px 12px;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      border-radius: 16px;
+      backdrop-filter: blur(14px);
+      box-shadow: 0 12px 34px rgba(0, 0, 0, 0.26);
+    }
+
+    .hud h1 {
+      margin: 0 0 6px;
+      font-size: 18px;
+      line-height: 1.3;
+      letter-spacing: 0.01em;
+    }
+
+    .subtitle {
+      margin: 0 0 12px;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.45;
+    }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      background: rgba(255, 255, 255, 0.05);
+      font-size: 12px;
+      color: var(--text);
+    }
+
+    .metrics {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .metric {
+      padding: 10px;
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.07);
+    }
+
+    .metric-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+
+    .metric-value {
+      font-size: 18px;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+    }
+
+    .progress-wrap {
+      margin-bottom: 12px;
+    }
+
+    .progress-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .progress-bar {
+      height: 10px;
+      border-radius: 999px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+    }
+
+    .progress-fill {
+      width: 0%;
+      height: 100%;
+      background: linear-gradient(90deg, var(--accent), var(--accent-2));
+      box-shadow: 0 0 18px rgba(83, 179, 255, 0.45);
+      transition: width 0.08s linear;
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      margin-bottom: 10px;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+      transition: transform 0.12s ease, opacity 0.12s ease, background 0.12s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .primary {
+      color: #06101c;
+      background: linear-gradient(135deg, #78c7ff, #7fffd4);
+    }
+
+    .secondary {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .danger {
+      color: white;
+      background: rgba(255, 123, 123, 0.18);
+      border: 1px solid rgba(255, 123, 123, 0.25);
+    }
+
+    .status {
+      font-size: 12px;
+      line-height: 1.45;
+      color: var(--muted);
+    }
+
+    .legend {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 10;
+      max-width: min(360px, calc(100vw - 32px));
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(10, 14, 24, 0.72);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(14px);
+      color: var(--text);
+      font-size: 12px;
+      line-height: 1.5;
+    }
+
+    .legend strong {
+      color: white;
+    }
+
+    .legend .small {
+      color: var(--muted);
+    }
+
+    .loading {
+      position: absolute;
+      inset: 0;
+      z-index: 20;
+      display: grid;
+      place-items: center;
+      background: radial-gradient(circle at center, rgba(12, 22, 39, 0.3), rgba(5, 8, 16, 0.86));
+      color: white;
+      text-align: center;
+      padding: 24px;
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: currentColor;
+      box-shadow: 0 0 10px currentColor;
+    }
+
+    @media (max-width: 720px) {
+      .hud {
+        width: calc(100vw - 24px);
+        top: 12px;
+        left: 12px;
+      }
+
+      .legend {
+        right: 12px;
+        bottom: 12px;
+        left: 12px;
+        max-width: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div id="map"></div>
+
+  <div id="loading" class="loading">
+    <div>
+      <div style="font-size:18px; font-weight:700; margin-bottom:8px;">載入 3D 城市場景中…</div>
+      <div>首次開啟會從 CDN 與 OpenStreetMap/OpenFreeMap 載入 WebGL 地圖與建物資料。</div>
+    </div>
+  </div>
+
+  <div class="hud">
+    <h1>台北車站 → 台北 101</h1>
+    <p class="subtitle">概念 DEMO：按下按鈕後，以固定 <strong>40 km/h</strong> 模擬第一人稱 3D 開車視角，路線採示意用城市道路路徑。</p>
+
+    <div class="pill-row">
+      <div class="pill" style="color: var(--accent);"><span class="dot"></span>WebGL 3D 建築</div>
+      <div class="pill" style="color: var(--accent-2);"><span class="dot"></span>第一人稱跟車鏡頭</div>
+      <div class="pill"><span style="opacity:0.85;">🚗</span> 固定速率 40 km/h</div>
+    </div>
+
+    <div class="metrics">
+      <div class="metric">
+        <div class="metric-label">總距離</div>
+        <div id="distanceTotal" class="metric-value">--</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">預估時間</div>
+        <div id="etaTotal" class="metric-value">--</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">已完成</div>
+        <div id="distanceDone" class="metric-value">0.00 km</div>
+      </div>
+      <div class="metric">
+        <div class="metric-label">剩餘時間</div>
+        <div id="etaLeft" class="metric-value">--</div>
+      </div>
+    </div>
+
+    <div class="progress-wrap">
+      <div class="progress-top">
+        <span>行程進度</span>
+        <span id="progressText">0%</span>
+      </div>
+      <div class="progress-bar">
+        <div id="progressFill" class="progress-fill"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button id="startBtn" class="primary">開始 40 km/h 展示</button>
+      <button id="pauseBtn" class="secondary" disabled>暫停</button>
+      <button id="resetBtn" class="danger">重設</button>
+    </div>
+
+    <div id="status" class="status">初始化中…</div>
+  </div>
+
+  <div class="legend">
+    <div><strong>鏡頭說明：</strong>開始後會自動切換成低空、前傾、高縮放的跟車視角，強調「像導航軟體的 3D 開車感」。</div>
+    <div class="small" style="margin-top:6px;">備註：這是提案用概念原型，路線採預先設定的示意軌跡，方便快速展示體驗與 UI/鏡頭效果。</div>
+  </div>
+
+  <script>
+    const SPEED_KMH = 40;
+    const SPEED_MPS = SPEED_KMH / 3.6;
+    const CAMERA_PITCH = 77;
+    const CAMERA_ZOOM = 18.15;
+    const LOOK_AHEAD_METERS = 55;
+    const SAMPLE_STEP_METERS = 8;
+
+    // 示意路線：台北車站 / 高鐵台北站 → 忠孝東路 → 松仁路 → 松壽路 → 台北 101
+    // 這不是 turn-by-turn 精準導航，而是為了展示 3D 導航產品概念的預設路徑。
+    const ROUTE_WAYPOINTS = [
+      [121.51772, 25.04767],
+      [121.52155, 25.04760],
+      [121.52660, 25.04752],
+      [121.53295, 25.04718],
+      [121.54040, 25.04625],
+      [121.54785, 25.04440],
+      [121.55515, 25.04255],
+      [121.56095, 25.04155],
+      [121.56505, 25.04100],
+      [121.56790, 25.04078],
+      [121.56835, 25.03845],
+      [121.56830, 25.03655],
+      [121.56710, 25.03560],
+      [121.56570, 25.03528],
+      [121.56452, 25.03402]
+    ];
+
+    const loadingEl = document.getElementById('loading');
+    const statusEl = document.getElementById('status');
+    const distanceTotalEl = document.getElementById('distanceTotal');
+    const etaTotalEl = document.getElementById('etaTotal');
+    const distanceDoneEl = document.getElementById('distanceDone');
+    const etaLeftEl = document.getElementById('etaLeft');
+    const progressTextEl = document.getElementById('progressText');
+    const progressFillEl = document.getElementById('progressFill');
+    const startBtn = document.getElementById('startBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const toRad = (deg) => deg * Math.PI / 180;
+    const toDeg = (rad) => rad * 180 / Math.PI;
+
+    function haversineMeters(a, b) {
+      const R = 6371000;
+      const lat1 = toRad(a[1]);
+      const lat2 = toRad(b[1]);
+      const dLat = toRad(b[1] - a[1]);
+      const dLon = toRad(b[0] - a[0]);
+      const h = Math.sin(dLat / 2) ** 2 + Math.cos(lat1) * Math.cos(lat2) * Math.sin(dLon / 2) ** 2;
+      return 2 * R * Math.asin(Math.sqrt(h));
+    }
+
+    function interpolateLngLat(a, b, t) {
+      return [
+        a[0] + (b[0] - a[0]) * t,
+        a[1] + (b[1] - a[1]) * t
+      ];
+    }
+
+    function densify(points, stepMeters) {
+      const dense = [points[0]];
+      for (let i = 0; i < points.length - 1; i++) {
+        const a = points[i];
+        const b = points[i + 1];
+        const dist = haversineMeters(a, b);
+        const steps = Math.max(1, Math.ceil(dist / stepMeters));
+        for (let s = 1; s <= steps; s++) {
+          dense.push(interpolateLngLat(a, b, s / steps));
+        }
+      }
+      return dense;
+    }
+
+    function buildCumulative(points) {
+      const cumulative = [0];
+      for (let i = 1; i < points.length; i++) {
+        cumulative[i] = cumulative[i - 1] + haversineMeters(points[i - 1], points[i]);
+      }
+      return cumulative;
+    }
+
+    function getPointAtDistance(points, cumulative, targetDistance) {
+      const total = cumulative[cumulative.length - 1];
+      const d = Math.max(0, Math.min(total, targetDistance));
+      if (d <= 0) return points[0];
+      if (d >= total) return points[points.length - 1];
+
+      let low = 0;
+      let high = cumulative.length - 1;
+      while (low < high) {
+        const mid = Math.floor((low + high) / 2);
+        if (cumulative[mid] < d) {
+          low = mid + 1;
+        } else {
+          high = mid;
+        }
+      }
+
+      const i = Math.max(1, low);
+      const prevD = cumulative[i - 1];
+      const nextD = cumulative[i];
+      const segT = nextD === prevD ? 0 : (d - prevD) / (nextD - prevD);
+      return interpolateLngLat(points[i - 1], points[i], segT);
+    }
+
+    function bearingBetween(a, b) {
+      const lon1 = toRad(a[0]);
+      const lon2 = toRad(b[0]);
+      const lat1 = toRad(a[1]);
+      const lat2 = toRad(b[1]);
+      const y = Math.sin(lon2 - lon1) * Math.cos(lat2);
+      const x = Math.cos(lat1) * Math.sin(lat2) - Math.sin(lat1) * Math.cos(lat2) * Math.cos(lon2 - lon1);
+      return (toDeg(Math.atan2(y, x)) + 360) % 360;
+    }
+
+    function formatKm(meters) {
+      return `${(meters / 1000).toFixed(2)} km`;
+    }
+
+    function formatDuration(seconds) {
+      const total = Math.max(0, Math.round(seconds));
+      const h = Math.floor(total / 3600);
+      const m = Math.floor((total % 3600) / 60);
+      const s = total % 60;
+      if (h > 0) {
+        return `${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+      }
+      return `${m}:${String(s).padStart(2, '0')}`;
+    }
+
+    function updateButtonStates(isRunning, isReady) {
+      startBtn.disabled = !isReady || isRunning;
+      pauseBtn.disabled = !isReady || !isRunning;
+    }
+
+    const routePoints = densify(ROUTE_WAYPOINTS, SAMPLE_STEP_METERS);
+    const cumulative = buildCumulative(routePoints);
+    const totalDistanceMeters = cumulative[cumulative.length - 1];
+    const totalDurationSeconds = totalDistanceMeters / SPEED_MPS;
+
+    distanceTotalEl.textContent = formatKm(totalDistanceMeters);
+    etaTotalEl.textContent = formatDuration(totalDurationSeconds);
+    etaLeftEl.textContent = formatDuration(totalDurationSeconds);
+
+    const map = new maplibregl.Map({
+      container: 'map',
+      style: 'https://tiles.openfreemap.org/styles/bright',
+      center: [121.545, 25.0415],
+      zoom: 12.9,
+      pitch: 52,
+      bearing: 18,
+      antialias: true,
+      attributionControl: true,
+      dragRotate: true,
+      touchPitch: true
+    });
+
+    map.addControl(new maplibregl.NavigationControl({ showCompass: true, showZoom: true }), 'top-right');
+
+    let progressMeters = 0;
+    let animFrame = null;
+    let lastTs = null;
+    let isRunning = false;
+    let isReady = false;
+    let followMarker = null;
+
+    function setStatus(text) {
+      statusEl.textContent = text;
+    }
+
+    function updateProgressUI() {
+      const ratio = totalDistanceMeters === 0 ? 0 : progressMeters / totalDistanceMeters;
+      progressTextEl.textContent = `${(ratio * 100).toFixed(1)}%`;
+      progressFillEl.style.width = `${ratio * 100}%`;
+      distanceDoneEl.textContent = formatKm(progressMeters);
+      etaLeftEl.textContent = formatDuration((totalDistanceMeters - progressMeters) / SPEED_MPS);
+    }
+
+    function getCameraPadding() {
+      const h = map.getContainer().clientHeight;
+      return {
+        top: Math.round(h * 0.06),
+        right: 0,
+        bottom: Math.round(h * 0.36),
+        left: 0
+      };
+    }
+
+    function updateCameraForProgress(distance) {
+      const current = getPointAtDistance(routePoints, cumulative, distance);
+      const lookAt = getPointAtDistance(routePoints, cumulative, Math.min(distance + LOOK_AHEAD_METERS, totalDistanceMeters));
+      const bearing = bearingBetween(current, lookAt);
+
+      map.jumpTo({
+        center: current,
+        bearing,
+        pitch: CAMERA_PITCH,
+        zoom: CAMERA_ZOOM,
+        padding: getCameraPadding(),
+        essential: true
+      });
+
+      if (followMarker) followMarker.setLngLat(current);
+    }
+
+    function resetOverview(animated = true) {
+      const bounds = routePoints.reduce(
+        (b, coord) => b.extend(coord),
+        new maplibregl.LngLatBounds(routePoints[0], routePoints[0])
+      );
+
+      const options = {
+        padding: { top: 70, right: 30, bottom: 90, left: 30 },
+        pitch: 52,
+        bearing: 18,
+        duration: animated ? 1200 : 0,
+        essential: true
+      };
+
+      map.fitBounds(bounds, options);
+    }
+
+    function stopAnimation() {
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = null;
+      lastTs = null;
+      isRunning = false;
+      updateButtonStates(isRunning, isReady);
+    }
+
+    function animationStep(ts) {
+      if (!isRunning) return;
+      if (lastTs == null) {
+        lastTs = ts;
+      }
+      const dt = Math.max(0, Math.min(0.05, (ts - lastTs) / 1000));
+      lastTs = ts;
+      progressMeters = Math.min(totalDistanceMeters, progressMeters + dt * SPEED_MPS);
+      updateCameraForProgress(progressMeters);
+      updateProgressUI();
+
+      if (progressMeters >= totalDistanceMeters) {
+        stopAnimation();
+        setStatus('已到達台北 101。你可以按「重設」回到總覽，再重新播放。');
+        return;
+      }
+
+      setStatus(`模擬行進中：固定 ${SPEED_KMH} km/h，第一人稱 3D 視角追蹤。`);
+      animFrame = requestAnimationFrame(animationStep);
+    }
+
+    function startAnimation() {
+      if (!isReady || isRunning) return;
+      isRunning = true;
+      updateButtonStates(isRunning, isReady);
+      setStatus(`開始展示：以 ${SPEED_KMH} km/h 模擬從台北車站前往台北 101。`);
+      updateCameraForProgress(progressMeters);
+      animFrame = requestAnimationFrame(animationStep);
+    }
+
+    function pauseAnimation() {
+      if (!isRunning) return;
+      stopAnimation();
+      setStatus('已暫停。可繼續播放或按重設返回總覽視角。');
+    }
+
+    function resetAnimation() {
+      stopAnimation();
+      progressMeters = 0;
+      updateProgressUI();
+      resetOverview(true);
+      setStatus('已重設。點擊「開始 40 km/h 展示」即可重新播放。');
+      if (followMarker) followMarker.setLngLat(routePoints[0]);
+    }
+
+    startBtn.addEventListener('click', startAnimation);
+    pauseBtn.addEventListener('click', pauseAnimation);
+    resetBtn.addEventListener('click', resetAnimation);
+    window.addEventListener('resize', () => {
+      if (isRunning) updateCameraForProgress(progressMeters);
+    });
+
+    map.on('load', () => {
+      try {
+        map.setMaxPitch(80);
+      } catch (err) {
+        // 某些環境若限制高 pitch，仍可用預設值運作。
+      }
+
+      const layers = map.getStyle().layers || [];
+      let labelLayerId = null;
+      for (let i = 0; i < layers.length; i++) {
+        const layer = layers[i];
+        if (layer.type === 'symbol' && layer.layout && layer.layout['text-field']) {
+          labelLayerId = layer.id;
+          break;
+        }
+      }
+
+      if (!map.getSource('openfreemap')) {
+        map.addSource('openfreemap', {
+          type: 'vector',
+          url: 'https://tiles.openfreemap.org/planet'
+        });
+      }
+
+      map.addLayer({
+        id: '3d-buildings-demo',
+        source: 'openfreemap',
+        'source-layer': 'building',
+        type: 'fill-extrusion',
+        minzoom: 15,
+        filter: ['!=', ['get', 'hide_3d'], true],
+        paint: {
+          'fill-extrusion-color': [
+            'interpolate', ['linear'], ['get', 'render_height'],
+            0, 'rgba(185,190,198,0.85)',
+            40, 'rgba(110,153,204,0.92)',
+            120, 'rgba(90,138,220,0.96)',
+            250, 'rgba(140,210,255,1)'
+          ],
+          'fill-extrusion-height': ['coalesce', ['get', 'render_height'], 0],
+          'fill-extrusion-base': ['coalesce', ['get', 'render_min_height'], 0],
+          'fill-extrusion-opacity': 0.96
+        }
+      }, labelLayerId || undefined);
+
+      map.addSource('route', {
+        type: 'geojson',
+        data: {
+          type: 'FeatureCollection',
+          features: [
+            {
+              type: 'Feature',
+              properties: { kind: 'route' },
+              geometry: {
+                type: 'LineString',
+                coordinates: routePoints
+              }
+            },
+            {
+              type: 'Feature',
+              properties: { kind: 'start' },
+              geometry: {
+                type: 'Point',
+                coordinates: ROUTE_WAYPOINTS[0]
+              }
+            },
+            {
+              type: 'Feature',
+              properties: { kind: 'end' },
+              geometry: {
+                type: 'Point',
+                coordinates: ROUTE_WAYPOINTS[ROUTE_WAYPOINTS.length - 1]
+              }
+            }
+          ]
+        }
+      });
+
+      map.addLayer({
+        id: 'route-halo',
+        type: 'line',
+        source: 'route',
+        filter: ['==', ['get', 'kind'], 'route'],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': 'rgba(20, 35, 60, 0.75)',
+          'line-width': 13
+        }
+      });
+
+      map.addLayer({
+        id: 'route-line',
+        type: 'line',
+        source: 'route',
+        filter: ['==', ['get', 'kind'], 'route'],
+        layout: { 'line-cap': 'round', 'line-join': 'round' },
+        paint: {
+          'line-color': '#69c4ff',
+          'line-width': 7,
+          'line-opacity': 0.95
+        }
+      });
+
+      map.addLayer({
+        id: 'route-points',
+        type: 'circle',
+        source: 'route',
+        filter: ['match', ['get', 'kind'], ['start', 'end'], true, false],
+        paint: {
+          'circle-radius': [
+            'match', ['get', 'kind'],
+            'start', 7,
+            'end', 8,
+            6
+          ],
+          'circle-color': [
+            'match', ['get', 'kind'],
+            'start', '#8dffdc',
+            'end', '#ffb86b',
+            '#ffffff'
+          ],
+          'circle-stroke-color': 'rgba(9,14,22,0.8)',
+          'circle-stroke-width': 2
+        }
+      });
+
+      followMarker = new maplibregl.Marker({
+        color: '#ffffff',
+        scale: 0.85
+      })
+        .setLngLat(routePoints[0])
+        .addTo(map);
+
+      resetOverview(false);
+      updateProgressUI();
+      isReady = true;
+      updateButtonStates(isRunning, isReady);
+      setStatus('已就緒。先看總覽，再按「開始 40 km/h 展示」切換為第一人稱 3D 鏡頭。');
+      loadingEl.classList.add('hidden');
+    });
+
+    map.on('error', (event) => {
+      console.error(event && event.error ? event.error : event);
+      loadingEl.classList.add('hidden');
+      setStatus('地圖載入時發生問題。請確認網路可連到 CDN 與 OpenFreeMap 後重新整理。');
+    });
+  </script>
+</body>
+</html>
