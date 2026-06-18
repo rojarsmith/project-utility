@@ -1,5 +1,7 @@
 # Keycloak
 
+Identity and Access Management
+
 ## Quick Command
 
 ```bash
@@ -114,5 +116,68 @@ sudo vi pre-hook.sh
 
 http://localhost:8050/realms/myrealm/account
 
+## Demo
 
+### Password Grant (Legacy)
+
+```bash
+# Password Grant (Legacy)
+curl -X POST https://keycloak.neuhex.com/realms/quick-start/protocol/openid-connect/token \
+    -H 'Content-Type: application/x-www-form-urlencoded' \
+    -d 'grant_type=password&username=bob&password=password&client_id=flow-experiment-1' \
+    -s | jq
+```
+
+### Implicit (Legacy)
+
+[Keycloak]
+
+Client: oauth_tools
+
+Root URL: https://oauth.tools
+
+Client authentication: On
+
+Authorization: On
+
+Authentication flow: All On
+
+[OAUTH TOOLS]
+
+Client: oauth_tools
+
+Secret: from Keycloack > Credentials
+
+Enabled: Code Flow, Implicit Flow, Client Credentials Flow, Device Flow, CIBA Flow, Can be framed
+
+Disable: Open in iFrame
+
+* Issuer
+https://keycloak.neuhex.com/auth/realms/quick-start
+* Metadata URL
+https://keycloak.neuhex.com/auth/realms/quick-start/.well-known/openid-configuration
+* Authorization Endpoint
+https://keycloak.neuhex.com/auth/realms/quick-start/protocol/openid-connect/auth
+* Token Endpoint
+https://keycloak.neuhex.com/auth/realms/quick-start/protocol/openid-connect/token
+* Userinfo Endpoint
+https://keycloak.neuhex.com/auth/realms/quick-start/protocol/openid-connect/userinfo
+* Introspection Endpoint
+https://keycloak.neuhex.com/auth/realms/quick-start/protocol/openid-connect/token/introspect
+
+### Authorization Code
+
+grant_type:refresh_token
+client_id:flow-experiment-1
+refresh_token:CLIENT_SECRET
+client_secret:REFRESH_TOKEN
+
+```bash
+curl -X POST 'https://keycloak.neuhex.com/realms/quick-start/protocol/openid-connect/token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=refresh_token' \
+  -d 'client_id=flow-experiment-1' \
+  -d 'client_secret=CLIENT_SECRET' \
+  -d 'refresh_token=REFRESH_TOKEN'
+```
 
