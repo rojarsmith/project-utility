@@ -1,5 +1,6 @@
 git@github.com:rojarsmith/ai-lab.git
 git@github.com:rojarsmith/code-quiz.git
+git@github.com:rojarsmith/document-trimmer.git
 git@github.com:rojarsmith/electron-sharp-prototype.git
 git@github.com:rojarsmith/esp32-knight.git
 git@github.com:rojarsmith/hawkbit-powerkit.git
