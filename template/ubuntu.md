@@ -35,3 +35,9 @@ Support OSC 1337.
 export PS1="$PS1\[\e]1337;CurrentDir="'$(pwd)\a\]'
 ```
 
+## Quick
+
+```bash
+xdg-open IMAGE.png
+```
+

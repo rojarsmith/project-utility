@@ -181,3 +181,18 @@ curl -X POST 'https://keycloak.neuhex.com/realms/quick-start/protocol/openid-con
   -d 'refresh_token=REFRESH_TOKEN'
 ```
 
+### Client Credentials
+
+```bash
+curl -X POST 'https://keycloak.neuhex.com/realms/quick-start/protocol/openid-connect/token' \
+  -H 'Content-Type: application/x-www-form-urlencoded' \
+  -d 'grant_type=client_credentials' \
+  -d 'client_id=oauth_tools' \
+  -d 'client_secret=CLIENT_SECRET'
+```
+
+### PKCE
+
+`code_verifier`, `code_challenge`
+
+### Device Code

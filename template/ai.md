@@ -12,6 +12,8 @@ ollama run krishairnd/Gemma-4-Uncensored
 ollama run igorls/gemma-4-12B-it-qat-q4_0-unquantized-heretic:Q8_0
 ```
 
+## LM Studio
+
 ## OpenCode
 
 ```shell
@@ -92,6 +94,20 @@ openclaw browser start
 openclaw gateway stop
 
 openclaw gateway start
+
+openclaw status --usage
+
+openclaw gateway usage-cost
+
+sqlite3 ~/.openclaw/agents/main/agent/openclaw-agent.sqlite \
+  "UPDATE auth_profile_store
+   SET store_json = json_set(store_json, '\$.profiles.\"openrouter:default\".key', 'API_KEY'),
+       updated_at = $(date +%s%3N)
+   WHERE store_key = 'primary';"
+
+sqlite3 ~/.openclaw/agents/main/agent/openclaw-agent.sqlite "SELECT store_json FROM auth_profile_store;"
 ```
 
+## Telegram
 
+https://api.telegram.org/botTHE_GUID_FOR_BOT/getUpdates
