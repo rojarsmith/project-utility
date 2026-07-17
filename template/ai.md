@@ -10,9 +10,39 @@ ollama run krishairnd/Gemma-4-Uncensored
 
 # 12 GB
 ollama run igorls/gemma-4-12B-it-qat-q4_0-unquantized-heretic:Q8_0
+
+ollama show baytout3/Qwen3.6-27B-Uncensored-HauhauCS-Balanced:IQ4_XS --modelfile
+ollama show krishairnd/Gemma-4-Uncensored --modelfile
+
+# modelfile for ollama
+ollama create Qwen3.6-27B-Uncensored-HauhauCS-Balanced-IQ4_XS -f D:\data\ai\models\llm\baytout3\Qwen3.6-27B-Uncensored-HauhauCS-Balanced\modelfile
 ```
 
 ## LM Studio
+
+To ensure LM Studio can automatically load models correctly, the directory C:\Users\\[USER]\\\.lmstudio\hub must be placed in the custom models root directory.
+
+The Runtime version can be deleted to save several gigabytes of space.
+
+## ComfyUI
+
+extra_model_paths.yaml for customize models path
+
+ComfyUI-Manager
+
+```bash
+.\python_embeded\python.exe -m pip install -r ComfyUI\manager_requirements.txt
+
+.\python_embeded\python.exe -m pip install matrix-nio
+
+.\python_embeded\python.exe -m pip install triton-windows
+
+.\python_embeded\python.exe -m pip install sageattn3 --no-build-isolation --extra-index-url https://comfy-org.github.io/wheels
+
+.\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --enable-manager
+
+.\python_embeded\python.exe -s ComfyUI\main.py --windows-standalone-build --enable-manager --user-directory "D:\data\ai\comfyui\user" --output-directory "D:\data\ai\comfyui\output" --input-directory "D:\data\ai\comfyui\input"
+```
 
 ## OpenCode
 
