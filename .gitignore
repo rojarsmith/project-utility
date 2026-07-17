@@ -1,3 +1,5 @@
 /.vscode
 project-list.txt
 *-local.bat
+.env
+github-clone.txt

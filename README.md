@@ -14,6 +14,61 @@ Search and batch pull all GIT projects on upper-level directory.
 
 List the directory names of all GIT projects in the previous level
 
+### github-clone.py
+
+Fetch all GitHub repositories (public and private) for the authenticated user via
+the GitHub REST API, and save their SSH clone URLs to `github-clone.txt`
+(git-ignored). Each line starts with a visibility label padded to align with
+`private`, followed by the SSH clone URL, e.g.:
+
+```
+private git@github.com:rojarsmith/ai-lab.git
+public  git@github.com:rojarsmith/zen-menu.git
+```
+
+Setup:
+
+1. Copy `.env.example` to `.env` (git-ignored, since it holds your token).
+2. Fill in `GITHUB_TOKEN` with a GitHub Personal Access Token that has `repo`
+   scope (required to list private repositories). If you only need public
+   repositories, set `GITHUB_USERNAME` instead and leave `GITHUB_TOKEN` empty.
+3. Run:
+
+```bash
+python3 github-clone.py
+```
+
+`.env` parameters:
+
+- `GITHUB_TOKEN` — Personal Access Token with `repo` scope (enables private repos)
+- `GITHUB_USERNAME` — used only when `GITHUB_TOKEN` is empty (public repos only)
+- `GITHUB_API_BASE_URL` — default `https://api.github.com` (e.g. for GitHub Enterprise)
+- `GITHUB_OUTPUT_FILE` — default `github-clone.txt`
+- `GITHUB_PER_PAGE` — default `100`
+- `GITHUB_AFFILIATION` — default `owner`. Controls which repos the token's
+  account can see (passed straight to GitHub's `affiliation` API parameter):
+  - `owner` — only repos owned by this account (excludes repos you were only
+    invited to as a collaborator, and repos of organizations you belong to)
+  - `collaborator` — repos you were added to as a collaborator
+  - `organization_member` — repos of organizations you are a member of
+  - comma-combine multiple values, e.g. `owner,organization_member`
+
+  The default of `owner` avoids picking up other people's repos that invited
+  your account as a collaborator (e.g. a repo like
+  `git@github.com:someone-else/some-project.git` showing up just because you
+  were added to it).
+
+Real OS environment variables of the same name (handy in CI) always take
+precedence over the `.env` file.
+
+Optional flags:
+
+- `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
+- `-o, --output <path>` — override the output file path (default: `github-clone.txt`, or the value from `.env`)
+
+This tool only uses the Python standard library (`urllib`, plus a tiny
+built-in `.env` parser), so no extra package installation is needed.
+
 ## Frontend Debug
 
 chrome --incognito --headless --remote-debugging-port=9222
@@ -38,5 +93,56 @@ sudo systemctl enable --now open-vm-tools
 sudo apt install avahi-daemon -y
 sudo systemctl enable avahi-daemon
 sudo systemctl start avahi-daemon
+```
+
+## Prompt Guidelines for AI-Generated Dev Tools
+
+This repo is full of small scripts generated with AI assistance. To keep them
+consistent and low-maintenance, reuse the following requirements whenever you
+ask an AI to write a new tool for this project:
+
+- **Cross-platform first** — must run unmodified on Windows, macOS, and Linux
+  (use `pathlib` instead of raw string paths, avoid shelling out to OS-specific
+  commands, guard any unavoidable OS branch with `os.name`/`sys.platform`).
+- **Minimize external dependencies** — prefer the standard library. If a
+  third-party package is unavoidable, auto-bootstrap an isolated `.venv`
+  (see `nginx-formatter.py` / `png-to-favicon.py`) instead of requiring a
+  global `pip install`.
+- **Externalize configuration** — secrets and tunable parameters (tokens,
+  URLs, usernames, output paths) must be read from a config file (e.g. `.env`
+  or `*.config.json`), never hardcoded or hand-typed on the command line.
+  Commit an example template (`.env.example`, `*.example.json`, ...), and add
+  the real config file to `.gitignore`.
+- **Single responsibility per tool** — one script does exactly one job.
+  Split unrelated features into separate tools instead of piling
+  subcommands/flags onto one script.
+- **Self-documenting CLI** — use `argparse` (or equivalent) so `--help`
+  always works, with sensible defaults and meaningful exit codes.
+- **English-only code** — all code, comments, and CLI text are written in
+  English regardless of the language used to request the tool.
+- **Git-ignore generated output** — any user-specific or regenerable output
+  file belongs in `.gitignore`, not in version control.
+
+A reusable prompt template following these rules:
+
+```text
+Write a <language> command-line tool named "<tool-name>" that <one clear task>.
+
+Requirements:
+- Cross-platform: must run unmodified on Windows, macOS, and Linux.
+- Minimize external dependencies: prefer the standard library; only add a
+  third-party package if there is no reasonable stdlib alternative, and
+  bootstrap it via an auto-created virtual environment rather than requiring
+  a global install.
+- Externalize configuration: any secret or tunable parameter (API tokens,
+  URLs, usernames, output paths) must be read from a config file (e.g. .env
+  or a JSON/INI config), not hardcoded or passed as a plaintext CLI argument.
+  Provide a committed example template (.env.example, *.example.json, ...)
+  and add the real config file to .gitignore.
+- Single responsibility: the tool should do exactly one job. Do not bundle
+  multiple unrelated features behind subcommands.
+- Provide --help via argparse with sensible defaults and meaningful exit codes.
+- Write all code, comments, and CLI text in English.
+- Any generated/user-specific output file should be listed in .gitignore.
 ```
 
