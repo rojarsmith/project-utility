@@ -69,6 +69,64 @@ Optional flags:
 This tool only uses the Python standard library (`urllib`, plus a tiny
 built-in `.env` parser), so no extra package installation is needed.
 
+### github-integrity.py
+
+Cross-checks `github-clone.txt` (produced by `github-clone.py`) against the
+local folders in the parent directory, and writes a plain-text report to
+`github-integrity.txt` (git-ignored) so you can see what's missing or extra
+at a glance. For every listed repo it checks:
+
+- the folder exists next to this project (one level up),
+- it is actually a git repository (`.git` is present),
+- its `origin` remote matches the expected GitHub repo.
+
+It also scans the parent directory for local git repos that aren't in the
+list at all (`EXTRA`), e.g. repos that were deleted/renamed on GitHub or
+filtered out by `GITHUB_AFFILIATION`.
+
+Run:
+
+```bash
+python3 github-integrity.py
+```
+
+Example report:
+
+```
+GitHub Clone Integrity Report
+Generated: 2026-07-18T01:15:56
+Source list: github-clone.txt (4 entries)
+Scanned directory: ..
+
+[OK]              ai-lab        git@github.com:rojarsmith/ai-lab.git
+[MISSING]         code-quiz     no local folder
+[NOT_A_GIT_REPO]  quantcat      folder exists but is not a git repository
+[REMOTE_MISMATCH] zen-menu      local remote is git@github.com:someone-else/zen-menu.git
+
+Extra local git repositories not listed in the clone list:
+[EXTRA] old-project remote: git@github.com:rojarsmith/old-project.git
+
+Summary: 1 MISSING, 1 NOT_A_GIT_REPO, 1 OK, 1 REMOTE_MISMATCH, 1 EXTRA
+```
+
+`.env` parameters:
+
+- `GITHUB_CLONE_LIST_FILE` — default `github-clone.txt`
+- `GITHUB_INTEGRITY_REPORT_FILE` — default `github-integrity.txt`
+- `GITHUB_INTEGRITY_PARENT_DIR` — default `..` (the parent directory, matching
+  where `git-clone-alot.bat` clones repos to)
+
+Optional flags:
+
+- `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
+- `-i, --input <path>` — override the clone list file path
+- `-d, --dir <path>` — override the directory to scan
+- `-o, --output <path>` — override the report output path
+
+This tool uses only the Python standard library plus the system `git`
+executable (already required to clone these repos in the first place) —
+no third-party package is installed.
+
 ## Frontend Debug
 
 chrome --incognito --headless --remote-debugging-port=9222
