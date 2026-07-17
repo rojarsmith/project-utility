@@ -19,7 +19,7 @@ import urllib.request
 from pathlib import Path
 
 DEFAULT_ENV_FILE = ".env"
-DEFAULT_OUTPUT_FILE = "github-clone.txt"
+DEFAULT_OUTPUT_FILE = "github-repository.txt"
 DEFAULT_API_BASE_URL = "https://api.github.com"
 DEFAULT_PER_PAGE = 100
 DEFAULT_AFFILIATION = "owner"
@@ -92,7 +92,7 @@ def parse_link_header(header_value: str) -> dict:
 def fetch_json(url: str, token: str) -> tuple:
     request = urllib.request.Request(url)
     request.add_header("Accept", "application/vnd.github+json")
-    request.add_header("User-Agent", "github-clone.py")
+    request.add_header("User-Agent", "github-repository.py")
     if token:
         request.add_header("Authorization", f"Bearer {token}")
     with urllib.request.urlopen(request) as response:

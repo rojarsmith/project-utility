@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
 """
-Check that every repository listed in github-clone.txt (see github-clone.py)
-has a matching local clone in the parent directory, and flag local git repos
-that are not in the list. Writes a plain-text report to github-integrity.txt.
+Check that every repository listed in github-repository.txt (see
+github-repository.py) has a matching local clone in the parent directory, and
+flag local git repos that are not in the list. Writes a plain-text report to
+github-integrity.txt.
 
 Requires the `git` executable to be available on PATH (already a prerequisite
 for cloning the repos in the first place); no third-party Python package is used.
@@ -18,12 +19,12 @@ from datetime import datetime
 from pathlib import Path
 
 DEFAULT_ENV_FILE = ".env"
-DEFAULT_CLONE_LIST_FILE = "github-clone.txt"
+DEFAULT_REPOSITORY_LIST_FILE = "github-repository.txt"
 DEFAULT_REPORT_FILE = "github-integrity.txt"
 DEFAULT_PARENT_DIR = ".."
 
 ENV_KEYS = (
-    "GITHUB_CLONE_LIST_FILE",
+    "GITHUB_REPOSITORY_LIST_FILE",
     "GITHUB_INTEGRITY_REPORT_FILE",
     "GITHUB_INTEGRITY_PARENT_DIR",
 )
@@ -75,9 +76,9 @@ def parse_repo_url(url: str):
     return match.group("owner"), match.group("repo")
 
 
-def load_clone_list(list_path: Path) -> list:
+def load_repository_list(list_path: Path) -> list:
     if not list_path.exists():
-        raise FileNotFoundError(f"Clone list file not found: {list_path}")
+        raise FileNotFoundError(f"Repository list file not found: {list_path}")
 
     entries = []
     lines = list_path.read_text(encoding="utf-8").splitlines()
@@ -174,7 +175,7 @@ def build_report(results: list, extras: list, list_path: Path, parent_dir: Path)
 
     if extras:
         lines.append("")
-        lines.append("Extra local git repositories not listed in the clone list:")
+        lines.append("Extra local git repositories not listed in the repository list:")
         extra_width = max(len(e["name"]) for e in extras)
         for e in extras:
             lines.append(f"[EXTRA] {e['name']:<{extra_width}} remote: {e['remote']}")
@@ -192,7 +193,7 @@ def build_report(results: list, extras: list, list_path: Path, parent_dir: Path)
 
 def main() -> int:
     parser = argparse.ArgumentParser(
-        description="Verify local clones against github-clone.txt and report missing/extra directories."
+        description="Verify local clones against github-repository.txt and report missing/extra directories."
     )
     parser.add_argument(
         "-e",
@@ -204,7 +205,7 @@ def main() -> int:
         "-i",
         "--input",
         default=None,
-        help=f"Path to the clone list file (default: value from .env, or {DEFAULT_CLONE_LIST_FILE}).",
+        help=f"Path to the repository list file (default: value from .env, or {DEFAULT_REPOSITORY_LIST_FILE}).",
     )
     parser.add_argument(
         "-d",
@@ -222,7 +223,7 @@ def main() -> int:
 
     config = load_config(Path(args.env_file))
 
-    list_file = args.input or config.get("GITHUB_CLONE_LIST_FILE", DEFAULT_CLONE_LIST_FILE)
+    list_file = args.input or config.get("GITHUB_REPOSITORY_LIST_FILE", DEFAULT_REPOSITORY_LIST_FILE)
     report_file = args.output or config.get("GITHUB_INTEGRITY_REPORT_FILE", DEFAULT_REPORT_FILE)
     parent_dir_str = args.dir or config.get("GITHUB_INTEGRITY_PARENT_DIR", DEFAULT_PARENT_DIR)
 
@@ -230,7 +231,7 @@ def main() -> int:
     parent_dir = Path(parent_dir_str)
 
     try:
-        entries = load_clone_list(list_path)
+        entries = load_repository_list(list_path)
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
         return 2

@@ -14,10 +14,10 @@ Search and batch pull all GIT projects on upper-level directory.
 
 List the directory names of all GIT projects in the previous level
 
-### github-clone.py
+### github-repository.py
 
 Fetch all GitHub repositories (public and private) for the authenticated user via
-the GitHub REST API, and save their SSH clone URLs to `github-clone.txt`
+the GitHub REST API, and save their SSH clone URLs to `github-repository.txt`
 (git-ignored). Each line starts with a visibility label padded to align with
 `private`, followed by the SSH clone URL, e.g.:
 
@@ -35,7 +35,7 @@ Setup:
 3. Run:
 
 ```bash
-python3 github-clone.py
+python3 github-repository.py
 ```
 
 `.env` parameters:
@@ -43,7 +43,7 @@ python3 github-clone.py
 - `GITHUB_TOKEN` — Personal Access Token with `repo` scope (enables private repos)
 - `GITHUB_USERNAME` — used only when `GITHUB_TOKEN` is empty (public repos only)
 - `GITHUB_API_BASE_URL` — default `https://api.github.com` (e.g. for GitHub Enterprise)
-- `GITHUB_OUTPUT_FILE` — default `github-clone.txt`
+- `GITHUB_OUTPUT_FILE` — default `github-repository.txt`
 - `GITHUB_PER_PAGE` — default `100`
 - `GITHUB_AFFILIATION` — default `owner`. Controls which repos the token's
   account can see (passed straight to GitHub's `affiliation` API parameter):
@@ -64,17 +64,17 @@ precedence over the `.env` file.
 Optional flags:
 
 - `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
-- `-o, --output <path>` — override the output file path (default: `github-clone.txt`, or the value from `.env`)
+- `-o, --output <path>` — override the output file path (default: `github-repository.txt`, or the value from `.env`)
 
 This tool only uses the Python standard library (`urllib`, plus a tiny
 built-in `.env` parser), so no extra package installation is needed.
 
 ### github-integrity.py
 
-Cross-checks `github-clone.txt` (produced by `github-clone.py`) against the
-local folders in the parent directory, and writes a plain-text report to
-`github-integrity.txt` (git-ignored) so you can see what's missing or extra
-at a glance. For every listed repo it checks:
+Cross-checks `github-repository.txt` (produced by `github-repository.py`)
+against the local folders in the parent directory, and writes a plain-text
+report to `github-integrity.txt` (git-ignored) so you can see what's missing
+or extra at a glance. For every listed repo it checks:
 
 - the folder exists next to this project (one level up),
 - it is actually a git repository (`.git` is present),
@@ -95,7 +95,7 @@ Example report:
 ```
 GitHub Clone Integrity Report
 Generated: 2026-07-18T01:15:56
-Source list: github-clone.txt (4 entries)
+Source list: github-repository.txt (4 entries)
 Scanned directory: ..
 
 [OK]              ai-lab        git@github.com:rojarsmith/ai-lab.git
@@ -103,7 +103,7 @@ Scanned directory: ..
 [NOT_A_GIT_REPO]  quantcat      folder exists but is not a git repository
 [REMOTE_MISMATCH] zen-menu      local remote is git@github.com:someone-else/zen-menu.git
 
-Extra local git repositories not listed in the clone list:
+Extra local git repositories not listed in the repository list:
 [EXTRA] old-project remote: git@github.com:rojarsmith/old-project.git
 
 Summary: 1 MISSING, 1 NOT_A_GIT_REPO, 1 OK, 1 REMOTE_MISMATCH, 1 EXTRA
@@ -111,7 +111,7 @@ Summary: 1 MISSING, 1 NOT_A_GIT_REPO, 1 OK, 1 REMOTE_MISMATCH, 1 EXTRA
 
 `.env` parameters:
 
-- `GITHUB_CLONE_LIST_FILE` — default `github-clone.txt`
+- `GITHUB_REPOSITORY_LIST_FILE` — default `github-repository.txt`
 - `GITHUB_INTEGRITY_REPORT_FILE` — default `github-integrity.txt`
 - `GITHUB_INTEGRITY_PARENT_DIR` — default `..` (the parent directory, matching
   where `git-clone-alot.bat` clones repos to)
@@ -119,7 +119,7 @@ Summary: 1 MISSING, 1 NOT_A_GIT_REPO, 1 OK, 1 REMOTE_MISMATCH, 1 EXTRA
 Optional flags:
 
 - `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
-- `-i, --input <path>` — override the clone list file path
+- `-i, --input <path>` — override the repository list file path
 - `-d, --dir <path>` — override the directory to scan
 - `-o, --output <path>` — override the report output path
 
