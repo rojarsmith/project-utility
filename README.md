@@ -69,6 +69,43 @@ Optional flags:
 This tool only uses the Python standard library (`urllib`, plus a tiny
 built-in `.env` parser), so no extra package installation is needed.
 
+### github-clone.py
+
+Reads `github-repository.txt` (produced by `github-repository.py`) and, for
+every listed repository whose folder is missing from the parent directory,
+runs `git clone` to fetch it there. Repositories that already have a local
+folder are left untouched, so it's safe to run repeatedly.
+
+Run:
+
+```bash
+python3 github-clone.py
+```
+
+Preview what would be cloned without actually cloning:
+
+```bash
+python3 github-clone.py --dry-run
+```
+
+`.env` parameters:
+
+- `GITHUB_REPOSITORY_LIST_FILE` — default `github-repository.txt`
+- `GITHUB_CLONE_TARGET_DIR` — default `..` (the parent directory, matching
+  where `git-clone-alot.bat` clones repos to)
+
+Optional flags:
+
+- `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
+- `-i, --input <path>` — override the repository list file path
+- `-d, --dir <path>` — override the directory to clone into
+- `--dry-run` — list repositories that would be cloned, without cloning them
+
+This tool uses only the Python standard library plus the system `git`
+executable — no third-party package is installed. SSH clone URLs
+(`git@github.com:...`) rely on your own SSH key already being set up with
+GitHub; no token is needed by this script.
+
 ### github-integrity.py
 
 Cross-checks `github-repository.txt` (produced by `github-repository.py`)
