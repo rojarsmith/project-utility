@@ -17,6 +17,15 @@ C:\Users\USER\\.claude\settings.json
 
 Or write in project scope.
 
+Avoid .claude trace
+
+Windows
+
+```shell
+git config --global core.excludesfile "%USERPROFILE%\.gitignore_global"
+echo .claude/> "%USERPROFILE%\.gitignore_global"
+```
+
 ## Ollama
 
 ```bash
