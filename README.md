@@ -106,6 +106,55 @@ executable — no third-party package is installed. SSH clone URLs
 (`git@github.com:...`) rely on your own SSH key already being set up with
 GitHub; no token is needed by this script.
 
+### github-pull.py
+
+Reads `github-repository.txt` (produced by `github-repository.py`) and, for
+every listed repository that already has a local folder in the parent
+directory, runs `git pull` there. Repositories with no local folder are
+skipped (use `github-clone.py` to fetch them first). Writes a plain-text
+report to `github-pull.txt` (git-ignored), including the reason for any
+failed pull — e.g. local file modifications or merge conflicts.
+
+Run:
+
+```bash
+python3 github-pull.py
+```
+
+Example report:
+
+```
+GitHub Pull Report
+Generated: 2026-07-18T14:57:05
+Source list: github-repository.txt (4 entries)
+Target directory: ..
+
+[OK]             ok-repo       Fast-forward | file.txt | 1 file changed, 1 insertion(+)
+[FAILED]         mismatch-repo error: Your local changes to the following files would be overwritten by merge: | shared.txt | Please commit your changes or stash them before you merge.
+[NOT_A_GIT_REPO] not-a-git     folder exists but is not a git repository
+[MISSING]        missing-repo  no local folder, nothing to pull
+
+Summary: 1 FAILED, 1 MISSING, 1 NOT_A_GIT_REPO, 1 OK
+```
+
+`.env` parameters:
+
+- `GITHUB_REPOSITORY_LIST_FILE` — default `github-repository.txt`
+- `GITHUB_PULL_TARGET_DIR` — default `..` (the parent directory, matching
+  where `git-clone-alot.bat` clones repos to)
+- `GITHUB_PULL_REPORT_FILE` — default `github-pull.txt`
+
+Optional flags:
+
+- `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
+- `-i, --input <path>` — override the repository list file path
+- `-d, --dir <path>` — override the directory containing the local repo folders
+- `-o, --output <path>` — override the report output path
+
+This tool uses only the Python standard library plus the system `git`
+executable — no third-party package is installed. The exit code is non-zero
+if any repository failed to pull, so it can be used as a CI gate.
+
 ### github-integrity.py
 
 Cross-checks `github-repository.txt` (produced by `github-repository.py`)
