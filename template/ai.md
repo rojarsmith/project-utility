@@ -1,5 +1,22 @@
 # AI
 
+## Claude
+
+Remove "Co-Authored-By: Claude Fable 5 <noreply@anthropic.com>", "🤖 Generated with Claude Code"
+
+C:\Users\USER\\.claude\settings.json
+
+```json
+{
+  "attribution": {
+    "commit": "",
+	"pr": ""
+  }
+}
+```
+
+Or write in project scope.
+
 ## Ollama
 
 ```bash
