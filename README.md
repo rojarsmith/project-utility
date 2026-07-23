@@ -213,6 +213,64 @@ This tool uses only the Python standard library plus the system `git`
 executable (already required to clone these repos in the first place) —
 no third-party package is installed.
 
+## Cloudflare
+
+### cloudflare-dns.py
+
+Creates or updates a single Cloudflare DNS record so it matches a given
+value, using the Cloudflare API. If the record doesn't exist it is created;
+if it exists with different content/TTL/proxy settings it is updated; if it
+already matches, nothing is changed.
+
+Setup:
+
+1. Copy `.env.example` to `.env` (git-ignored, since it holds your credentials).
+2. Fill in `CLOUDFLARE_API_TOKEN` (a scoped API Token with `Zone:DNS:Edit`
+   permission on the target zone — create one at
+   https://dash.cloudflare.com/profile/api-tokens). Alternatively, set the
+   legacy `CLOUDFLARE_API_KEY` + `CLOUDFLARE_API_EMAIL` pair.
+3. Set `CLOUDFLARE_ZONE_NAME` (or `CLOUDFLARE_ZONE_ID` if you already know it),
+   `CLOUDFLARE_RECORD_NAME`, `CLOUDFLARE_RECORD_TYPE`, and
+   `CLOUDFLARE_RECORD_CONTENT`.
+4. Run:
+
+```bash
+python cloudflare-dns.py
+```
+
+`.env` parameters:
+
+- `CLOUDFLARE_API_TOKEN` — preferred auth method, a scoped API Token
+- `CLOUDFLARE_API_KEY` / `CLOUDFLARE_API_EMAIL` — legacy Global API Key auth,
+  used only when `CLOUDFLARE_API_TOKEN` is empty
+- `CLOUDFLARE_API_BASE_URL` — default `https://api.cloudflare.com/client/v4`
+- `CLOUDFLARE_ZONE_ID` — the zone to operate on; takes priority over `CLOUDFLARE_ZONE_NAME`
+- `CLOUDFLARE_ZONE_NAME` — used to look up the zone ID when `CLOUDFLARE_ZONE_ID` is empty
+- `CLOUDFLARE_RECORD_NAME` — the DNS record to create/update, e.g. `sub.example.com`
+- `CLOUDFLARE_RECORD_TYPE` — default `A`
+- `CLOUDFLARE_RECORD_CONTENT` — the value the record should be set to, e.g. an IP address
+- `CLOUDFLARE_RECORD_TTL` — default `1` (Cloudflare's "automatic" TTL)
+- `CLOUDFLARE_RECORD_PROXIED` — default `false`
+
+Real OS environment variables of the same name (handy in CI) always take
+precedence over the `.env` file.
+
+Optional flags (each overrides the matching `.env` value for a single run):
+
+- `-e, --env-file <path>` — use an alternate `.env` file (default: `.env`)
+- `--zone-id <id>` / `--zone-name <name>`
+- `--name <record>` / `--type <A|AAAA|CNAME|...>` / `--content <value>` / `--ttl <seconds>`
+- `--proxied` / `--no-proxied`
+
+This is handy for simple dynamic-DNS style updates, e.g.:
+
+```bash
+python3 cloudflare-dns.py --content "$(curl -s https://api.ipify.org)"
+```
+
+This tool only uses the Python standard library (`urllib`), so no extra
+package installation is needed.
+
 ## Frontend Debug
 
 chrome --incognito --headless --remote-debugging-port=9222
